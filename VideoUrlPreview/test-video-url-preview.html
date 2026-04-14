@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test - VideoUrlPreview</title>
+  <style>
+    body {
+      font-family: Segoe UI, Tahoma, sans-serif;
+      margin: 24px;
+      line-height: 1.4;
+      color: #222;
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      max-width: 760px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #f7f7f7;
+    }
+
+    button {
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      background: #f2f2f2;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Prueba de plugin `videoUrlPreview`</h1>
+
+  <p>Pega una URL de YouTube y cambia de foco para disparar el evento <code>change</code>.</p>
+
+  <section class="row">
+    <label for="videoUrl1">Video principal</label>
+    <input
+      id="videoUrl1"
+      type="text"
+      data-role="video-preview"
+      data-video-preview-target-frame="#previewFrame1"
+      placeholder="Ej: https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+
+    <iframe id="previewFrame1" allowfullscreen title="Vista previa principal"></iframe>
+  </section>
+
+  <button id="addDynamic">Agregar bloque dinámico</button>
+  <div id="dynamicHost"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="./VideoUrlPreview.js"></script>
+  <script>
+    // Bloque opcional para probar que el MutationObserver inicializa nuevos inputs.
+    $('#addDynamic').on('click', function () {
+      $('#dynamicHost').append(
+        '<section class="row">' +
+          '<label for="videoUrlDynamic">Video dinámico</label>' +
+          '<input id="videoUrlDynamic" type="text" data-video-preview-target-frame="#previewFrameDynamic" placeholder="Pega otra URL" />' +
+          '<iframe id="previewFrameDynamic" allowfullscreen title="Vista previa dinámica"></iframe>' +
+        '</section>'
+      );
+    });
+  </script>
+</body>
+</html>
