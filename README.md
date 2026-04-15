@@ -46,6 +46,7 @@ Ejemplo actual:
 PluginsPublicos/
   VideoUrlPreview/
     VideoUrlPreview.js
+    VideoUrlPreview.min.js
     README.md
     README.en.md
     test-video-url-preview.html
