@@ -17,7 +17,8 @@ ECMAScript 2020 is supported by most modern browsers.
 - `VideoUrlPreview`: previews YouTube videos in an `<iframe>` from a URL.
 - `ItemMover`: moves list elements up or down using `data-*` trigger attributes.
 - `ItemRemover`: removes container elements from a delete trigger.
-- `ReplaceMe`: replaces a trigger with remote HTML fetched through `POST`.
+- `ReplaceMe`: replaces a trigger with remote HTML fetched through `POST` or `GET`.
+- `TemplateRenderizer`: renders HTML templates by replacing placeholders like `{{property}}` and nested paths.
 
 ## Repository Structure
 
@@ -38,6 +39,7 @@ PluginsPublicos/
   VideoUrlPreview/
     VideoUrlPreview.js
     README.md
+    README.en.md
     test-video-url-preview.html
 ```
 
