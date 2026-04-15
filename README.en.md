@@ -2,6 +2,7 @@
 
 A collection of JavaScript plugins for DOM manipulation, organized by folder.
 No external dependencies.
+These are automatically initialized when they detect the necessary HTML attributes, so you don't have to worry about writing JS; you can also opt for manual initialization.
 
 ## General Requirements
 
@@ -19,6 +20,7 @@ PluginsPublicos/
   PluginName/
     plugin.js
     README.md
+    test-pluginName-preview.html
 ```
 
 Current example:
@@ -46,4 +48,4 @@ Inside each plugin folder:
 
 ## Goal
 
-Maintain a simple, reusable, and well-documented plugin library so that anyone can quickly integrate them into their projects by simply copying the JS and incorporating them into their projects or necessary views.
+Maintain a simple, reusable, and well-documented plugin library so that anyone can quickly integrate them into their projects by simply copying the JS(pluginName.js) and incorporating them into their projects or necessary views.

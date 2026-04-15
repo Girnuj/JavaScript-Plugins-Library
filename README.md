@@ -2,6 +2,7 @@
 
 Coleccion de plugins JavaScript para manipulacion del DOM organizados por carpeta.
 Sin dependencias externas.
+Estos se inicializan solos al detectar los atributos HTML necesarios, asi no tienes que preocuparte por escribir JS, tambien puedes optar por la inicializacion manual.
 
 ## Requisitos Generales
 
@@ -19,6 +20,7 @@ PluginsPublicos/
   NombreDelPlugin/
     plugin.js
     README.md
+    test-pluginName-preview.html
 ```
 
 Ejemplo actual:
@@ -46,4 +48,4 @@ En cada carpeta de plugin:
 
 ## Objetivo
 
-Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos copiando solamente el JS e incorporandolos en sus proyectos o vistas necesarias.
+Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos copiando solamente el JS(pluginName.js) e incorporandolos en sus proyectos o vistas necesarias de una forma muy simple.
