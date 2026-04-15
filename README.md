@@ -1,6 +1,7 @@
 # Plugins
 
-Coleccion de plugins JavaScript organizados por carpeta.
+Coleccion de plugins JavaScript para manipulacion del DOM organizados por carpeta.
+Sin dependencias externas.
 
 ## Requisitos Generales
 
@@ -45,4 +46,4 @@ En cada carpeta de plugin:
 
 ## Objetivo
 
-Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos.
+Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos copiando solamente el JS e incorporandolos en sus proyectos o vistas necesarias.

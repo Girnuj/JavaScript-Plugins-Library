@@ -1,11 +1,13 @@
 # Plugins
 
-Collection of JavaScript plugins organized by folder.
+A collection of JavaScript plugins for DOM manipulation, organized by folder.
+No external dependencies.
 
 ## General Requirements
 
 - JavaScript using ECMAScript 2020 (ECMA-2020) syntax
 
+Functional plugins in native JavaScript.
 ECMAScript 2020 is supported by most modern browsers.
 
 ## Repository Structure
@@ -44,4 +46,4 @@ Inside each plugin folder:
 
 ## Goal
 
-Maintain a simple, reusable, and well-documented plugin library so anyone can integrate plugins quickly into their projects.
+Maintain a simple, reusable, and well-documented plugin library so that anyone can quickly integrate them into their projects by simply copying the JS and incorporating them into their projects or necessary views.
