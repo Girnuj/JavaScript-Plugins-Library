@@ -16,6 +16,12 @@ Incluye solo el plugin:
 <script src="./imgUploadPreview.js"></script>
 ```
 
+Para uso en produccion, si no necesitas leer el codigo fuente, puedes incluir la version minificada:
+
+```html
+<script src="./imgUploadPreview.min.js"></script>
+```
+
 ## Uso Basico
 
 ```html
@@ -119,3 +125,4 @@ En uso normal no hace falta llamar `destroy()`: si el nodo se elimina del DOM, e
 Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-img-upload-preview.html`
+

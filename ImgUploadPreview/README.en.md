@@ -16,6 +16,12 @@ Include only the plugin:
 <script src="./imgUploadPreview.js"></script>
 ```
 
+For production usage, if you do not need to read the source code, you can include the minified file:
+
+```html
+<script src="./imgUploadPreview.min.js"></script>
+```
+
 ## Basic Usage
 
 ```html
@@ -119,3 +125,4 @@ In normal usage you do not need to call `destroy()`: if the node is removed from
 You can open the test file included in this project:
 
 - `test-img-upload-preview.html`
+

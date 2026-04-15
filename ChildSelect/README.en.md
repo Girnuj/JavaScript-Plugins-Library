@@ -14,7 +14,13 @@ Native JavaScript plugin for dependent selects (parent-child) with dynamic optio
 Include only the plugin:
 
 ```html
-<script src="./childselect.js"></script>
+<script src="./childSelect.js"></script>
+```
+
+For production usage, if you do not need to read the source code, you can include the minified file:
+
+```html
+<script src="./childSelect.min.js"></script>
 ```
 
 ## Usage 1: Simple Parent-Child with `fetch`
@@ -136,3 +142,4 @@ In both cases, the plugin uses `fetch` to load data and initializes automaticall
 You can open the test file included in this project:
 
 - `test-child-select.html`
+

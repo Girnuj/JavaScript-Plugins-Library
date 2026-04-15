@@ -16,6 +16,12 @@ Include only the plugin:
 <script src="./VideoUrlPreview.js"></script>
 ```
 
+For production usage, if you do not need to read the source code, you can include the minified file:
+
+```html
+<script src="./VideoUrlPreview.min.js"></script>
+```
+
 ## Basic Usage
 
 ```html
@@ -101,3 +107,4 @@ Common YouTube URL formats are supported, for example:
 You can open the test file included in this project:
 
 - `test-video-url-preview.html`
+

@@ -11,6 +11,11 @@ Estos se inicializan solos al detectar los atributos HTML necesarios, asi no tie
 Plugins funcionales en JavaScript nativo.
 ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 
+## Versiones Minificadas
+
+Cada plugin incluye su version minificada (`*.min.js`) dentro de su propia carpeta.
+Si no necesitas leer o depurar el codigo fuente, usa el archivo minificado para una integracion mas ligera en produccion.
+
 ## Plugins Disponibles
 
 - `ImgUploadPreview`: previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
@@ -30,6 +35,7 @@ Cada plugin vive en su propia carpeta y debe incluir su documentacion:
 PluginsPublicos/
   NombreDelPlugin/
     plugin.js
+    plugin.min.js
     README.md
     test-pluginName.html
 ```

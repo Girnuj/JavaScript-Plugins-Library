@@ -16,6 +16,12 @@ Include only the plugin:
 <script src="./itemRemover.js"></script>
 ```
 
+For production usage, if you do not need to read the source code, you can include the minified file:
+
+```html
+<script src="./itemRemover.min.js"></script>
+```
+
 ## Basic Usage
 
 ```html
@@ -95,3 +101,4 @@ In normal usage you do not need to call `destroy()`: if the node is removed from
 You can open the test file included in this project:
 
 - `test-item-remover.html`
+

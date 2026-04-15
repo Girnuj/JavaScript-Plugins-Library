@@ -16,6 +16,12 @@ Incluye solo el plugin:
 <script src="./inputSwitchFriendly.js"></script>
 ```
 
+Para uso en produccion, si no necesitas leer el codigo fuente, puedes incluir la version minificada:
+
+```html
+<script src="./inputSwitchFriendly.min.js"></script>
+```
+
 ## Uso Basico
 
 ```html
@@ -90,3 +96,4 @@ Ademas, usa `MutationObserver` para inicializar nodos agregados dinamicamente y 
 Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-input-switch-friendly.html`
+

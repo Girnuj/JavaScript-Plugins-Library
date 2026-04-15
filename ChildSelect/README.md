@@ -14,7 +14,13 @@ Plugin JavaScript nativo para selects dependientes (parent-child) con carga dina
 Incluye solo el plugin:
 
 ```html
-<script src="./childselect.js"></script>
+<script src="./childSelect.js"></script>
+```
+
+Para uso en produccion, si no necesitas leer el codigo fuente, puedes incluir la version minificada:
+
+```html
+<script src="./childSelect.min.js"></script>
 ```
 
 ## Uso 1: Parent-Child simple con `fetch`
@@ -136,3 +142,4 @@ En ambos casos, el plugin usa `fetch` para cargar datos y se inicializa automati
 Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-child-select.html`
+

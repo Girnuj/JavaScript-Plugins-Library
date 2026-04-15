@@ -16,6 +16,12 @@ Incluye solo el plugin:
 <script src="./templateRenderizer.js"></script>
 ```
 
+Para uso en produccion, si no necesitas leer el codigo fuente, puedes incluir la version minificada:
+
+```html
+<script src="./templateRenderizer.min.js"></script>
+```
+
 ## Uso Basico
 
 ```html
@@ -80,3 +86,4 @@ Incluye solo el plugin:
 Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-template-renderizer.html`
+

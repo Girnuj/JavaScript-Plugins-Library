@@ -11,6 +11,11 @@ These are automatically initialized when they detect the necessary HTML attribut
 Functional plugins in native JavaScript.
 ECMAScript 2020 is supported by most modern browsers.
 
+## Minified Versions
+
+Each plugin includes a minified build (`*.min.js`) inside its own folder.
+If you do not need to read or debug source code, use the minified file for a lighter production integration.
+
 ## Available Plugins
 
 - `ImgUploadPreview`: previews selected image files in an `<img>` element.
@@ -30,6 +35,7 @@ Each plugin lives in its own folder and should include its documentation:
 PluginsPublicos/
   PluginName/
     plugin.js
+    plugin.min.js
     README.md
     test-pluginName.html
 ```
