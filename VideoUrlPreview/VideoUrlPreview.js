@@ -1,15 +1,75 @@
 ﻿/**
- * @fileoverview Plugin jQuery para previsualizar videos de YouTube a partir de una URL ingresada.
- * @version 2.0
+ * @fileoverview Plugin nativo para previsualizar videos de YouTube a partir de una URL ingresada.
+ * @version 3.0
  * @since 2026
  * @module VideoUrlPreview
  */
-+function ($) {
+(function () {
 	'use strict';
 
-	const PLUGIN_NAME = 'videoUrlPreview'
-		, INSTANCE_KEY = `plugin.${PLUGIN_NAME}`
-		, SELECTOR_ROLE = 'input[data-role="video-preview"], input[data-video-preview-target-frame]';
+	const SELECTOR_ROLE = 'input[data-role="video-preview"], input[data-video-preview-target-frame]'
+		, VIDEO_URL_PREVIEW_DEFAULTS = Object.freeze({
+			targetItemSelector: '',
+		})
+		, INSTANCES = new WeakMap()
+		, PENDING_REMOVALS = new Set();
+
+	const getTargetElement = (selector) => selector ? document.querySelector(selector) : null;
+
+	const clearFrame = (target) => {
+		if (target) {
+			target.removeAttribute('src');
+		}
+	};
+
+	const getValidatedOptions = (element, options = {}) => {
+		const targetItemSelector = options.targetItemSelector || element.dataset.videoPreviewTargetFrame;
+
+		if (!targetItemSelector) {
+			throw new Error("Error: No se especificó el selector 'data-video-preview-target-frame'.");
+		}
+
+		const target = getTargetElement(targetItemSelector);
+		if (!target) {
+			console.warn(`Warning: No se encontró ningún elemento para el selector '${targetItemSelector}'.`);
+			return { ...options, targetItemSelector };
+		}
+
+		if (target.tagName !== 'IFRAME') {
+			throw new Error("Error: El selector 'data-video-preview-target-frame' no apunta a un elemento <iframe>.");
+		}
+
+		return { ...options, targetItemSelector };
+	};
+
+	const getSubjects = (root = document) => {
+		const subjects = [];
+
+		if (root.nodeType === 1 && root.matches(SELECTOR_ROLE)) {
+			subjects.push(root);
+		}
+
+		if (typeof root.querySelectorAll === 'function') {
+			subjects.push(...root.querySelectorAll(SELECTOR_ROLE));
+		}
+
+		return subjects;
+	};
+
+	const flushPendingRemovals = () => {
+		PENDING_REMOVALS.forEach((node) => {
+			if (!node.isConnected) {
+				VideoUrlPreview.destroyAll(node);
+			}
+
+			PENDING_REMOVALS.delete(node);
+		});
+	};
+
+	const scheduleRemovalCheck = (node) => {
+		PENDING_REMOVALS.add(node);
+		queueMicrotask(flushPendingRemovals);
+	};
 
 	/**
 	 * Clase principal del plugin VideoUrlPreview.
@@ -18,168 +78,187 @@
 	 */
 	class VideoUrlPreview {
 		/**
-		 * Opciones predeterminadas del plugin.
-		 * @type {Object}
-		 */
-		static DEFAULTS = {
-			targetItemSelector: '',
-		};
-
-		/**
 		 * Crea una instancia de VideoUrlPreview.
-		 * @param {HTMLElement} element - Elemento sobre el que se inicializa el plugin.
+		 * @param {HTMLInputElement} element - Input de texto sobre el que se inicializa.
 		 * @param {Object} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
-			/**
-			 * Elemento HTML que activa el plugin.
-			 * @type {jQuery}
-			 */
-			this.$subject = $(element);
-
-			/**
-			 * Opciones del plugin.
-			 * @type {Object}
-			 */
-			this.options = { ...VideoUrlPreview.DEFAULTS, ...options };
-
-			/**
-			 * Elemento objetivo donde se mostrará la previsualización (iframe).
-			 * @type {jQuery|null}
-			 */
-			this.$target = this.options.targetItemSelector ? $(this.options.targetItemSelector) : null;
+			this.subject = element;
+			this.options = { ...VIDEO_URL_PREVIEW_DEFAULTS, ...options };
+			this.target = getTargetElement(this.options.targetItemSelector);
+			this.isBound = false;
+			this.handleInput = this.handleInput.bind(this);
+			this.handleChange = this.handleChange.bind(this);
 		}
 
 		/**
 		 * Extrae el ID de YouTube de una URL válida.
 		 * @param {string} url - URL del video de YouTube.
 		 * @returns {string|null} ID del video o null si no es válido.
-		 * @private
 		 */
-		_getYouTubeId(url) {
+		getYouTubeId(url) {
 			if (!url || typeof url !== 'string') return null;
 			const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
-			, match = url.match(regExp);
+				, match = url.match(regExp);
 			return (match && match[2] && match[2].length === 11) ? match[2] : null;
 		}
 
 		/**
-		 * Vincula el evento de cambio al input para actualizar o eliminar la previsualización.
-		 * Si el input está vacío o la URL no es válida, elimina la previsualización anterior.
+		 * Vincula los eventos del input.
 		 */
 		bind() {
-			const updatePreview = (inputValue, clearOnInvalid = false) => {
-				const value = `${inputValue || ''}`.trim()
-					, videoId = this._getYouTubeId(value);
-				if (this.$target && this.$target.length) {
-					if (videoId) {
-						this.$target.attr('src', `//www.youtube.com/embed/${videoId}`);
-						return;
-					}
+			if (this.isBound) {
+				return;
+			}
 
-					if (clearOnInvalid || !value) {
-						this.$target.removeAttr('src');
-					}
-				}
-			};
+			this.subject.addEventListener('input', this.handleInput);
+			this.subject.addEventListener('change', this.handleChange);
+			this.isBound = true;
+			this.updatePreview(this.subject.value, true);
+		}
 
-			// En input solo actualiza si la URL ya es valida (no limpia durante tipeo parcial).
-			this.$subject.on('input', (e) => {
-				updatePreview(e.target.value, false);
-			});
+		/**
+		 * Desmonta la instancia y libera sus listeners.
+		 * @param {Object} [options] - Configuración del desmontaje.
+		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar el iframe actual.
+		 */
+		destroy(options = {}) {
+			if (!this.isBound) {
+				return;
+			}
 
-			// En change (blur/Enter), si queda invalido, limpia la previsualizacion.
-			this.$subject.on('change', (e) => {
-				updatePreview(e.target.value, true);
-			});
+			const { clearPreview = false } = options;
 
-			// Si el input ya tiene valor al inicializar, renderiza la previsualizacion.
-			updatePreview(this.$subject.val(), true);
+			this.subject.removeEventListener('input', this.handleInput);
+			this.subject.removeEventListener('change', this.handleChange);
+			this.isBound = false;
+			INSTANCES.delete(this.subject);
+
+			if (clearPreview) {
+				this.clearPreview();
+			}
+		}
+
+		/**
+		 * Limpia la vista previa actual.
+		 */
+		clearPreview() {
+			clearFrame(this.target);
+		}
+
+		/**
+		 * Actualiza la previsualización.
+		 * @param {string} inputValue - Valor actual del input.
+		 * @param {boolean} clearOnInvalid - Si debe limpiar cuando el valor es inválido.
+		 */
+		updatePreview(inputValue, clearOnInvalid = false) {
+			const value = `${inputValue || ''}`.trim()
+				, videoId = this.getYouTubeId(value);
+
+			if (!this.target) {
+				return;
+			}
+
+			if (videoId) {
+				this.target.src = `//www.youtube.com/embed/${videoId}`;
+				return;
+			}
+
+			if (clearOnInvalid || !value) {
+				this.clearPreview();
+			}
+		}
+
+		/**
+		 * Maneja el evento input.
+		 * @param {Event} evt - Evento input.
+		 */
+		handleInput(evt) {
+			this.updatePreview(evt.target.value, false);
+		}
+
+		/**
+		 * Maneja el evento change.
+		 * @param {Event} evt - Evento change.
+		 */
+		handleChange(evt) {
+			this.updatePreview(evt.target.value, true);
+		}
+
+		static init(element, options = {}) {
+			if (!(element instanceof HTMLInputElement)) {
+				throw new Error('Error: VideoUrlPreview.init requiere un <input>.');
+			}
+
+			const currentInstance = INSTANCES.get(element);
+			if (currentInstance) {
+				return currentInstance;
+			}
+
+			const validatedOptions = getValidatedOptions(element, options)
+				, instance = new VideoUrlPreview(element, validatedOptions);
+
+			INSTANCES.set(element, instance);
+			instance.bind();
+			return instance;
+		}
+
+		static getInstance(element) {
+			if (!(element instanceof HTMLInputElement)) {
+				return null;
+			}
+
+			return INSTANCES.get(element) || null;
+		}
+
+		static destroy(element, options = {}) {
+			const instance = VideoUrlPreview.getInstance(element);
+
+			if (!instance) {
+				return false;
+			}
+
+			instance.destroy(options);
+			return true;
+		}
+
+		static initAll(root = document) {
+			return getSubjects(root).map((element) => VideoUrlPreview.init(element));
+		}
+
+		static destroyAll(root = document, options = {}) {
+			return getSubjects(root).reduce((destroyedCount, element) => {
+				return VideoUrlPreview.destroy(element, options) ? destroyedCount + 1 : destroyedCount;
+			}, 0);
 		}
 	}
 
-	/**
-	 * Definición del plugin jQuery con validación de selector objetivo (<iframe>).
-	 * @param {Object|string|null} option - Opciones o método a ejecutar.
-	 * @returns {jQuery}
-	 */
-	function Plugin(option) {
-		option = option || {};
-		/**
-		 * Obtiene y valida las opciones requeridas para el plugin VideoUrlPreview.
-		 * Extrae el selector objetivo desde los atributos data-* o desde las opciones,
-		 * y valida que exista y apunte a un elemento <iframe>.
-		 * @param {jQuery} $this - Elemento jQuery sobre el que se inicializa el plugin.
-		 * @returns {Object} Opciones validadas con targetItemSelector.
-		 * @throws {Error} Si el selector no está especificado o no apunta a un <iframe>.
-		 */
-		const getValidatedOptions = ($this, option) => {
-			const { videoPreviewTargetFrame } = $this.data()
-				, targetItemSelector = option.targetItemSelector || videoPreviewTargetFrame; //data-video-preview-target-frame
-			if (!targetItemSelector) {
-				throw new Error("Error: No se especificó el selector 'data-video-preview-target-frame'.");
-			}
-			const $target = $(targetItemSelector);
-			if (!$target.length) {
-				console.warn(`Warning: No se encontró ningún elemento para el selector '${targetItemSelector}'.`);
-				return option;
-			}
-			if ($target.prop('tagName') !== 'IFRAME') {
-				throw new Error("Error: El selector 'data-video-preview-target-frame' no apunta a un elemento <iframe>");
-			}
-			return { targetItemSelector, ...option };
-		};
+	const startAutoInit = () => {
+		VideoUrlPreview.initAll(document);
 
-		return this.each((_, element) => {
-			const $this = $(element)
-				, funcInstance = $this.data(INSTANCE_KEY);
-			if (!funcInstance) {
-				const options = getValidatedOptions($this, option)
-					, instance = new VideoUrlPreview(element, options);
-				$this.data(INSTANCE_KEY, instance);
-				instance.bind();
-			}
-		});
-	}
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.nodeType !== 1) return;
+					PENDING_REMOVALS.delete(node);
+					VideoUrlPreview.initAll(node);
+				});
 
-	// Almacena la referencia anterior del plugin para evitar conflictos.
-	const OLD = $.fn[PLUGIN_NAME];
-
-	// Asigna el plugin a jQuery.
-	$.fn[PLUGIN_NAME] = Plugin;
-	$.fn[PLUGIN_NAME].Constructor = VideoUrlPreview;
-
-	/**
-	 * Evita conflictos con otros plugins que usen el mismo nombre.
-	 * @returns {jQuery}
-	 */
-	$.fn[PLUGIN_NAME].noConflict = function () {
-		$.fn[PLUGIN_NAME] = OLD;
-		return this;
-	};
-
-	/**
-	 * Inicializa el plugin dentro de un contenedor raíz.
-	 * @param {HTMLElement|Document} [root=document] - Nodo raíz para buscar inputs.
-	 */
-	const initializeIn = (root = document) => {
-		$(SELECTOR_ROLE, root)[PLUGIN_NAME](null);
-	};
-
-	// Inicialización automática al cargar el DOM.
-	$(() => {
-		initializeIn(document);
-	});
-
-	// Inicialización automática cuando se agregan nodos dinámicamente al DOM.
-	const observer = new MutationObserver((mutations) => {
-		mutations.forEach((mutation) => {
-			mutation.addedNodes.forEach((node) => {
-				if (node.nodeType !== 1) return;
-				initializeIn(node);
+				mutation.removedNodes.forEach((node) => {
+					if (node.nodeType !== 1) return;
+					scheduleRemovalCheck(node);
+				});
 			});
 		});
-	});
-	observer.observe(document.body, { childList: true, subtree: true });
 
-}(window.jQuery);
+		observer.observe(document.body, { childList: true, subtree: true });
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', startAutoInit, { once: true });
+	} else {
+		startAutoInit();
+	}
+
+	window.VideoUrlPreview = VideoUrlPreview;
+})();

@@ -1,20 +1,77 @@
 /**
- * @fileoverview Plugin jQuery para previsualizar imagenes al subir archivos.
- * @version 2.0
- * @since 2025
+ * @fileoverview Plugin nativo para previsualizar imagenes al subir archivos.
+ * @version 3.0
+ * @since 2026
  * @module ImgUploadPreview
  */
-(function ($) {
+(function () {
 	'use strict';
 
-	const PLUGIN_NAME = 'imgUploadPreview'
-		, INSTANCE_KEY = `plugin.${PLUGIN_NAME}`
-		, SELECTOR_IMG_UPLOAD = 'input[data-img-upload="input"], input[data-img-upload-preview-target]'
+	const SELECTOR_IMG_UPLOAD = 'input[data-img-upload="input"], input[data-img-upload-preview-target]'
 		, IMG_UPLOAD_PREVIEW_DEFAULTS = Object.freeze({
 			targetItemSelector: '',
 			allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
 			maxFileSize: 2 * 1024 * 1024, //2MB
+		})
+		, INSTANCES = new WeakMap()
+		, PENDING_REMOVALS = new Set();
+
+	const getTargetElement = (selector) => selector ? document.querySelector(selector) : null;
+
+	const clearImage = (target) => {
+		if (target) {
+			target.removeAttribute('src');
+		}
+	};
+
+	const getValidatedOptions = (element, options = {}) => {
+		const targetItemSelector = options.targetItemSelector || element.dataset.imgUploadPreviewTarget;
+
+		if (!targetItemSelector) {
+			throw new Error("Error: No se especificó el selector 'data-img-upload-preview-target'.");
+		}
+
+		const target = getTargetElement(targetItemSelector);
+		if (!target) {
+			console.warn(`Warning: No se encontró ningún elemento para el selector '${targetItemSelector}'.`);
+			return { ...options, targetItemSelector };
+		}
+
+		if (target.tagName !== 'IMG') {
+			throw new Error("Error: El selector 'data-img-upload-preview-target' no apunta a un elemento <img>.");
+		}
+
+		return { ...options, targetItemSelector };
+	};
+
+	const getSubjects = (root = document) => {
+		const subjects = [];
+
+		if (root.nodeType === 1 && root.matches(SELECTOR_IMG_UPLOAD)) {
+			subjects.push(root);
+		}
+
+		if (typeof root.querySelectorAll === 'function') {
+			subjects.push(...root.querySelectorAll(SELECTOR_IMG_UPLOAD));
+		}
+
+		return subjects;
+	};
+
+	const flushPendingRemovals = () => {
+		PENDING_REMOVALS.forEach((node) => {
+			if (!node.isConnected) {
+				ImgUploadPreview.destroyAll(node);
+			}
+
+			PENDING_REMOVALS.delete(node);
 		});
+	};
+
+	const scheduleRemovalCheck = (node) => {
+		PENDING_REMOVALS.add(node);
+		queueMicrotask(flushPendingRemovals);
+	};
 
 	/**
 	 * Clase principal del plugin ImgUploadPreview.
@@ -23,155 +80,172 @@
 	class ImgUploadPreview {
 		/**
 		 * Crea una instancia de ImgUploadPreview.
-		 * @param {HTMLElement} element - Elemento sobre el que se inicializa el plugin.
+		 * @param {HTMLInputElement} element - Input file sobre el que se inicializa.
 		 * @param {Object} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
-			/**
-			 * Elemento HTML que activa el plugin.
-			 * @type {jQuery}
-			 */
-			this.$subject = $(element);
-
-			/**
-			 * Opciones del plugin.
-			 * @type {Object}
-			 */
+			this.subject = element;
 			this.options = { ...IMG_UPLOAD_PREVIEW_DEFAULTS, ...options };
-
-			/**
-			 * Elemento objetivo donde se mostrará la previsualización.
-			 * @type {jQuery}
-			 */
-			this.$target = $(this.options.targetItemSelector);
+			this.target = getTargetElement(this.options.targetItemSelector);
+			this.isBound = false;
+			this.handleChange = this.handleChange.bind(this);
 		}
 
 		/**
 		 * Vincula el evento de cambio al input para mostrar la previsualización.
 		 */
 		bind() {
-			this.$subject.on('change', (evt) => {
-				const input = evt.target
-					, file = input.files && input.files[0];
+			if (this.isBound) {
+				return;
+			}
 
-				if (!file) {
-					this.$target.removeAttr('src');
-					return;
-				}
+			this.subject.addEventListener('change', this.handleChange);
+			this.isBound = true;
+		}
 
-				const { allowedMimeTypes, maxFileSize } = this.options
-					, isAllowedType = allowedMimeTypes.includes(file.type)
-					, isAllowedSize = file.size <= maxFileSize;
+		/**
+		 * Desmonta la instancia y libera sus listeners.
+		 * @param {Object} [options] - Configuración del desmontaje.
+		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar la imagen actual.
+		 */
+		destroy(options = {}) {
+			if (!this.isBound) {
+				return;
+			}
 
-				if (!isAllowedType) {
-					console.warn(`Formato no permitido: ${file.type || 'desconocido'}.`);
-					this.$target.removeAttr('src');
-					input.value = '';
-					return;
-				}
+			const { clearPreview = false } = options;
 
-				if (!isAllowedSize) {
-					console.warn(`Archivo demasiado grande. Maximo: ${Math.round(maxFileSize / 1024 / 1024)} MB.`);
-					this.$target.removeAttr('src');
-					input.value = '';
-					return;
-				}
+			this.subject.removeEventListener('change', this.handleChange);
+			this.isBound = false;
+			INSTANCES.delete(this.subject);
 
-				const reader = new FileReader();
-				reader.onload = (e) => {
-					this.$target.attr('src', e.target.result);
-				};
-				reader.readAsDataURL(file);
-			});
+			if (clearPreview) {
+				this.clearPreview();
+			}
+		}
+
+		/**
+		 * Limpia la vista previa actual.
+		 */
+		clearPreview() {
+			clearImage(this.target);
+		}
+
+		/**
+		 * Maneja el cambio de archivo en el input.
+		 * @param {Event} evt - Evento change del input.
+		 */
+		handleChange(evt) {
+			const input = evt.target
+				, file = input.files && input.files[0];
+
+			if (!file) {
+				this.clearPreview();
+				return;
+			}
+
+			const { allowedMimeTypes, maxFileSize } = this.options
+				, isAllowedType = allowedMimeTypes.includes(file.type)
+				, isAllowedSize = file.size <= maxFileSize;
+
+			if (!isAllowedType) {
+				console.warn(`Formato no permitido: ${file.type || 'desconocido'}.`);
+				this.clearPreview();
+				input.value = '';
+				return;
+			}
+
+			if (!isAllowedSize) {
+				console.warn(`Archivo demasiado grande. Maximo: ${Math.round(maxFileSize / 1024 / 1024)} MB.`);
+				this.clearPreview();
+				input.value = '';
+				return;
+			}
+
+			if (!this.target) {
+				return;
+			}
+
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				this.target.src = e.target.result;
+			};
+			reader.readAsDataURL(file);
+		}
+		static init(element, options = {}) {
+			if (!(element instanceof HTMLInputElement)) {
+				throw new Error('Error: ImgUploadPreview.init requiere un <input>.');
+			}
+
+			const currentInstance = INSTANCES.get(element);
+			if (currentInstance) {
+				return currentInstance;
+			}
+
+			const validatedOptions = getValidatedOptions(element, options)
+				, instance = new ImgUploadPreview(element, validatedOptions);
+
+			INSTANCES.set(element, instance);
+			instance.bind();
+			return instance;
+		}
+
+		static getInstance(element) {
+			if (!(element instanceof HTMLInputElement)) {
+				return null;
+			}
+
+			return INSTANCES.get(element) || null;
+		}
+
+		static destroy(element, options = {}) {
+			const instance = ImgUploadPreview.getInstance(element);
+
+			if (!instance) {
+				return false;
+			}
+
+			instance.destroy(options);
+			return true;
+		}
+
+		static initAll(root = document) {
+			return getSubjects(root).map((element) => ImgUploadPreview.init(element));
+		}
+
+		static destroyAll(root = document, options = {}) {
+			return getSubjects(root).reduce((destroyedCount, element) => {
+				return ImgUploadPreview.destroy(element, options) ? destroyedCount + 1 : destroyedCount;
+			}, 0);
 		}
 	}
 
-	/**
-	 * Definición del plugin jQuery.
-	 * @param {Object|string} option - Opciones o método a ejecutar.
-	 * @returns {jQuery}
-	 */
-	function Plugin(option) {
-		option = option || {};
-		/**
-		 * Obtiene y valida las opciones requeridas para el plugin ImgUploadPreview.
-		 * Extrae el selector objetivo desde los atributos data-* o desde las opciones,
-		 * y valida que exista y apunte a un elemento <img>.
-		 * @param {jQuery} $this - Elemento jQuery sobre el que se inicializa el plugin.
-		 * @returns {Object} Opciones validadas con targetItemSelector.
-		 * @throws {Error} Si el selector no está especificado o no apunta a un <img>.
-		 */
-		const getValidatedOptions = ($this, option) => {
-			const { imgUploadPreviewTarget } = $this.data()
-				, targetItemSelector = option.targetItemSelector || imgUploadPreviewTarget; //data-img-upload-preview-target
-			
-			if (!targetItemSelector) {
-				throw new Error("Error: No se especificó el selector 'data-img-upload-preview-target'.");
-			}
+	const startAutoInit = () => {
+		ImgUploadPreview.initAll(document);
 
-			const $target = $(targetItemSelector);
-			if (!$target.length) {
-				console.warn(`Warning: No se encontró ningún elemento para el selector '${targetItemSelector}'.`);
-				return option;
-			}
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.nodeType !== 1) return;
+					PENDING_REMOVALS.delete(node);
+					ImgUploadPreview.initAll(node);
+				});
 
-			if ($target.prop('tagName') !== 'IMG') {
-				throw new Error("Error: El selector 'data-img-upload-preview-target' no apunta a un elemento <img>.");
-			}
-
-			return { targetItemSelector, ...option };
-		};
-
-		return this.each((_, element) => {
-			const $this = $(element)
-				, funcInstance = $this.data(INSTANCE_KEY);
-			if (!funcInstance) {
-				const options = getValidatedOptions($this, option)
-					, instance = new ImgUploadPreview(element, options);
-				$this.data(INSTANCE_KEY, instance);
-				instance.bind();
-			}
-		});
-	}
-
-	// Almacena la referencia anterior del plugin para evitar conflictos.
-	const OLD = $.fn[PLUGIN_NAME];
-
-	// Asigna el plugin a jQuery.
-	$.fn[PLUGIN_NAME] = Plugin;
-	$.fn[PLUGIN_NAME].Constructor = ImgUploadPreview;
-
-	/**
-	 * Evita conflictos con otros plugins que usen el mismo nombre.
-	 * @returns {jQuery}
-	 */
-	$.fn[PLUGIN_NAME].noConflict = function () {
-		$.fn[PLUGIN_NAME] = OLD;
-		return this;
-	};
-
-	/**
-	 * Inicializa el plugin dentro de un contenedor raíz.
-	 * @param {HTMLElement|Document} [root=document] - Nodo raíz para buscar inputs.
-	 */
-	const initializeIn = (root = document) => {
-		$(SELECTOR_IMG_UPLOAD, root)[PLUGIN_NAME](null);
-	};
-
-	// Inicialización automática al cargar el DOM.
-	$(() => {
-		initializeIn(document);
-	});
-
-	// Inicialización automática cuando se agregan nodos dinámicamente al DOM.
-	const observer = new MutationObserver((mutations) => {
-		mutations.forEach((mutation) => {
-			mutation.addedNodes.forEach((node) => {
-				if (node.nodeType !== 1) return;
-				initializeIn(node);
+				mutation.removedNodes.forEach((node) => {
+					if (node.nodeType !== 1) return;
+					scheduleRemovalCheck(node);
+				});
 			});
 		});
-	});
-	observer.observe(document.body, { childList: true, subtree: true });
 
-})(window.jQuery);
+		observer.observe(document.body, { childList: true, subtree: true });
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', startAutoInit, { once: true });
+	} else {
+		startAutoInit();
+	}
+
+	window.ImgUploadPreview = ImgUploadPreview;
+})();

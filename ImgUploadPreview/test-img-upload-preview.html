@@ -64,12 +64,13 @@
   <button id="addDynamic">Agregar bloque dinámico</button>
   <div id="dynamicHost"></div>
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="./imgUploadPreview.js"></script>
   <script>
     // Prueba opcional para verificar auto-init en nodos agregados dinámicamente.
-    $('#addDynamic').on('click', function () {
-      $('#dynamicHost').append(
+    document.getElementById('addDynamic').addEventListener('click', function () {
+      const host = document.getElementById('dynamicHost');
+      host.insertAdjacentHTML(
+        'beforeend',
         '<section class="row">' +
           '<label for="fileInputDynamic">Imagen dinámica</label>' +
           '<input id="fileInputDynamic" type="file" accept="image/*" data-img-upload="input" data-img-upload-preview-target="#imgPreviewDynamic" />' +

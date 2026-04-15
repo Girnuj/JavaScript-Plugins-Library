@@ -65,12 +65,13 @@
   <button id="addDynamic">Agregar bloque dinámico</button>
   <div id="dynamicHost"></div>
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="./VideoUrlPreview.js"></script>
   <script>
     // Bloque opcional para probar que el MutationObserver inicializa nuevos inputs.
-    $('#addDynamic').on('click', function () {
-      $('#dynamicHost').append(
+    document.getElementById('addDynamic').addEventListener('click', function () {
+      const host = document.getElementById('dynamicHost');
+      host.insertAdjacentHTML(
+        'beforeend',
         '<section class="row">' +
           '<label for="videoUrlDynamic">Video dinámico</label>' +
           '<input id="videoUrlDynamic" type="text" data-video-preview-target-frame="#previewFrameDynamic" placeholder="Pega otra URL" />' +

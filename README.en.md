@@ -1,10 +1,9 @@
-# PluginsPublicos
+# Plugins
 
-Collection of JavaScript/jQuery plugins organized by folder.
+Collection of JavaScript plugins organized by folder.
 
 ## General Requirements
 
-- jQuery 3.x or higher
 - JavaScript using ECMAScript 2020 (ECMA-2020) syntax
 
 ECMAScript 2020 is supported by most modern browsers.

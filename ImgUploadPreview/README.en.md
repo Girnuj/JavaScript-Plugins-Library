@@ -1,19 +1,18 @@
 # ImgUploadPreview
 
-jQuery plugin to preview images in an `<img>` from an `<input type="file">`.
+Native JavaScript plugin to preview images in an `<img>` from an `<input type="file">`.
 
 ## Requirements
 
-- jQuery 3.x or higher
+- A modern browser with support for `FileReader`, `MutationObserver`, and `WeakMap`
 - An `<input>` with the `data-img-upload-preview-target` attribute
 - A target `<img>`
 
 ## Installation
 
-Include jQuery first, then the plugin:
+Include only the plugin:
 
 ```html
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="./imgUploadPreview.js"></script>
 ```
 
@@ -56,7 +55,7 @@ These options can be customized as needed. They provide reliable plugin-level va
 
 ```html
 <script>
-  $('#myInput').imgUploadPreview({
+  ImgUploadPreview.init(document.querySelector('#myInput'), {
     targetItemSelector: '#imgPreview1',
     allowedMimeTypes: ['image/jpeg', 'image/png'],
     maxFileSize: 5 * 1024 * 1024 // 5 MB
@@ -71,7 +70,7 @@ The plugin auto-initializes on:
 - `input[data-img-upload="input"]`
 - `input[data-img-upload-preview-target]`
 
-It also uses `MutationObserver` to initialize inputs added dynamically to the DOM.
+It also uses `MutationObserver` to initialize inputs added dynamically to the DOM and tear down instances when those nodes actually leave the document.
 
 ## Manual Initialization (optional)
 
@@ -79,11 +78,35 @@ If you need to initialize a specific block manually:
 
 ```html
 <script>
-  $('#myInput').imgUploadPreview();
-  // or by selector
-  $('input[data-img-upload-preview-target]').imgUploadPreview();
+  ImgUploadPreview.init(document.querySelector('#myInput'));
+  // or on a full container
+  ImgUploadPreview.initAll(document.querySelector('#myForm'));
 </script>
 ```
+
+## Public API
+
+```html
+<script>
+  const input = document.querySelector('#myInput');
+  const instance = ImgUploadPreview.init(input);
+
+  ImgUploadPreview.getInstance(input);
+  ImgUploadPreview.destroy(input, { clearPreview: true });
+  ImgUploadPreview.destroyAll(document.querySelector('#myForm'));
+
+  instance.destroy();
+</script>
+```
+
+- `ImgUploadPreview.init(element, options)`: creates or reuses an instance.
+- `ImgUploadPreview.getInstance(element)`: returns the current instance or `null`.
+- `ImgUploadPreview.destroy(element, options)`: tears down a specific instance.
+- `ImgUploadPreview.destroyAll(root, options)`: tears down all instances inside a container.
+- `instance.destroy(options)`: removes listeners for the current instance.
+- `clearPreview: true`: option to clear the `<img>` `src` on destroy.
+
+In normal usage you do not need to call `destroy()`: if the node is removed from the DOM, the plugin attempts to tear it down automatically.
 
 ## Common Errors
 

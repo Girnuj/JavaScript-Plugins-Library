@@ -1,19 +1,18 @@
 # VideoUrlPreview
 
-Plugin jQuery para previsualizar videos de YouTube en un `<iframe>` a partir de una URL ingresada en un `<input>`.
+Plugin JavaScript nativo para previsualizar videos de YouTube en un `<iframe>` a partir de una URL ingresada en un `<input>`.
 
 ## Requisitos
 
-- jQuery 3.x o superior
+- Un navegador moderno con soporte para `MutationObserver`, `WeakMap` y `queueMicrotask`
 - Un `<input>` con el atributo `data-video-preview-target-frame`
 - Un `<iframe>` de destino
 
 ## Instalacion
 
-Incluye jQuery y luego el plugin:
+Incluye solo el plugin:
 
 ```html
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="./VideoUrlPreview.js"></script>
 ```
 
@@ -45,7 +44,7 @@ El plugin se auto-inicializa sobre:
 - `input[data-role="video-preview"]`
 - `input[data-video-preview-target-frame]`
 
-Ademas, usa `MutationObserver` para inicializar inputs agregados dinamicamente al DOM.
+Ademas, usa `MutationObserver` para inicializar inputs agregados dinamicamente al DOM y desmontar instancias cuando esos nodos salen realmente del documento.
 
 ## Inicializacion Manual (opcional)
 
@@ -53,11 +52,35 @@ Si necesitas inicializar manualmente un bloque concreto:
 
 ```html
 <script>
-  $('#miInput').videoUrlPreview();
-  // o por selector
-  $('input[data-video-preview-target-frame]').videoUrlPreview();
+  VideoUrlPreview.init(document.querySelector('#miInput'));
+  // o sobre un contenedor completo
+  VideoUrlPreview.initAll(document.querySelector('#miFormulario'));
 </script>
 ```
+
+## API publica
+
+```html
+<script>
+  const input = document.querySelector('#miInput');
+  const instance = VideoUrlPreview.init(input);
+
+  VideoUrlPreview.getInstance(input);
+  VideoUrlPreview.destroy(input, { clearPreview: true });
+  VideoUrlPreview.destroyAll(document.querySelector('#miFormulario'));
+
+  instance.destroy();
+</script>
+```
+
+- `VideoUrlPreview.init(element, options)`: crea o reutiliza una instancia.
+- `VideoUrlPreview.getInstance(element)`: devuelve la instancia actual o `null`.
+- `VideoUrlPreview.destroy(element, options)`: desmonta una instancia concreta.
+- `VideoUrlPreview.destroyAll(root, options)`: desmonta todas las instancias dentro de un contenedor.
+- `instance.destroy(options)`: elimina listeners de la instancia actual.
+- `clearPreview: true`: opcion para limpiar el `src` del `<iframe>` al destruir.
+
+En uso normal no hace falta llamar `destroy()`: si el nodo se elimina del DOM, el plugin intenta desmontarlo automaticamente.
 
 ## Formatos de URL soportados
 

@@ -1,12 +1,12 @@
-# PluginsPublicos
+# Plugins
 
-Coleccion de plugins JavaScript/jQuery organizados por carpeta.
+Coleccion de plugins JavaScript organizados por carpeta.
 
 ## Requisitos Generales
 
-- jQuery 3.x (cualquier version en adelante)
 - JavaScript con sintaxis ECMAScript 2020 (ECMA-2020)
 
+Plugins funcionales en JavaScript nativo.
 ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 
 ## Estructura del Repositorio
