@@ -108,3 +108,13 @@ Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-item-remover.html`
 
+## Vista previa del ejemplo
+
+Estado inicial del HTML:
+
+![ItemRemover ejemplo inicial](./img/image.png)
+
+Estado despues de agregar algunos items y eliminar otros:
+
+![ItemRemover con items agregados y eliminados](./img/image2.png)
+

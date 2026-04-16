@@ -108,3 +108,13 @@ You can open the test file included in this project:
 
 - `test-item-remover.html`
 
+## Example Preview
+
+Initial HTML state:
+
+![ItemRemover initial example](./img/image.png)
+
+State after adding some items and removing others:
+
+![ItemRemover with added and removed items](./img/image2.png)
+
