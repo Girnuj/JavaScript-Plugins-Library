@@ -64,6 +64,12 @@ That is enough. The plugin initializes automatically when the DOM is ready.
 - `previous`
 - `next`
 
+## Supported `data-*` attributes
+
+- `data-role="move-item"`: marks the trigger that performs the move through auto-init. Status: **required for auto-initialization**.
+- `data-move-target`: selector used with `closest(...)` to resolve the item that will be moved. Status: **required**.
+- `data-move-direction`: move direction (`previous` to move up, `next` to move down). Status: **optional** (default is `next`).
+
 ## Automatic Initialization
 
 The plugin auto-initializes on:

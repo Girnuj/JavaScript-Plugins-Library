@@ -51,6 +51,12 @@ Puedes configurarlo por inicializacion manual o por atributo:
 - atributo sugerido: `data-remove-target=".mi-item"`
 - opcion JS: `{ targetItemSelector: '.mi-item' }`
 
+## Atributos `data-*` soportados
+
+- `data-role="remove-item"`: marca el trigger que dispara la eliminacion por auto-init. Estado: **requerido en auto-inicializacion**.
+- `data-remove-target`: selector para definir el contenedor a eliminar con `closest(...)`. Estado: **opcional**.
+- `data-remove-item="item"`: marca sugerida para el contenedor eliminable por defecto. Estado: **opcional** (recomendado si no usas `data-remove-target`).
+
 ## Inicializacion Automatica
 
 El plugin se auto-inicializa sobre:

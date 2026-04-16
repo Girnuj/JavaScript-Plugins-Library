@@ -59,15 +59,15 @@ Estado abierto:
 
 ## Atributos soportados
 
-- `data-modal="toggle"`: trigger para alternar abrir/cerrar.
-- `data-modal-target="#selector"`: selector CSS del modal a controlar.
-- `data-modal="dismiss"`: trigger interno para cerrar el modal.
-- `data-modal="backdrop"`: zona de fondo para cerrar al hacer click (si no es estatico).
-- `data-role="modal"`: marca un contenedor como sujeto modal.
-- `data-modal-static="true|false"`: si es `true`, evita cerrar con backdrop.
-- `data-modal-focus="true|false"`: enfoca el modal y primer elemento interactivo al abrir.
-- `data-modal-keyboard="true|false"`: permite cerrar con tecla Escape.
-- `data-modal-show="true|false"`: abre automaticamente durante la inicializacion.
+- `data-modal="toggle"`: trigger para alternar abrir/cerrar. Estado: **opcional**.
+- `data-modal-target="#selector"`: selector CSS del modal a controlar. Estado: **requerido cuando usas `data-modal="toggle"`**.
+- `data-modal="dismiss"`: trigger interno para cerrar el modal. Estado: **opcional**.
+- `data-modal="backdrop"`: zona de fondo para cerrar al hacer click (si no es estatico). Estado: **opcional**.
+- `data-role="modal"`: marca un contenedor como sujeto modal para auto-init. Estado: **opcional** (tambien detecta `role="dialog"` y `<dialog>`).
+- `data-modal-static="true|false"`: si es `true`, evita cerrar con backdrop. Estado: **opcional**.
+- `data-modal-focus="true|false"`: enfoca el modal y primer elemento interactivo al abrir. Estado: **opcional**.
+- `data-modal-keyboard="true|false"`: permite cerrar con tecla Escape. Estado: **opcional**.
+- `data-modal-show="true|false"`: abre automaticamente durante la inicializacion. Estado: **opcional**.
 
 ## API publica
 

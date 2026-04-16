@@ -64,6 +64,12 @@ Con eso basta. El plugin se inicializa automaticamente al cargar el DOM.
 - `previous`
 - `next`
 
+## Atributos `data-*` soportados
+
+- `data-role="move-item"`: marca el trigger que dispara el movimiento por auto-init. Estado: **requerido en auto-inicializacion**.
+- `data-move-target`: selector para ubicar con `closest(...)` el item que se movera. Estado: **requerido**.
+- `data-move-direction`: direccion del movimiento (`previous` para subir, `next` para bajar). Estado: **opcional** (por defecto usa `next`).
+
 ## Inicializacion Automatica
 
 El plugin se auto-inicializa sobre:

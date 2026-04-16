@@ -43,6 +43,11 @@ That is enough. The plugin initializes automatically when the DOM is ready.
 - If no file is selected, clears the `<img>` `src`.
 - If the file does not pass type or size validation, clears preview and resets the input.
 
+## Supported `data-*` attributes
+
+- `data-img-upload="input"`: marks the `<input type="file">` as an auto-init subject. Status: **required**.
+- `data-img-upload-preview-target`: CSS selector of the `<img>` where the preview is rendered. Status: **required**.
+
 ## Validations
 
 The plugin includes internal validations:

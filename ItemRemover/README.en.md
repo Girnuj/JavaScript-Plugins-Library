@@ -51,6 +51,12 @@ You can configure it from manual initialization or attribute:
 - suggested attribute: `data-remove-target=".my-item"`
 - JS option: `{ targetItemSelector: '.my-item' }`
 
+## Supported `data-*` attributes
+
+- `data-role="remove-item"`: marks the trigger that performs removal through auto-init. Status: **required for auto-initialization**.
+- `data-remove-target`: selector used to define the container to remove with `closest(...)`. Status: **optional**.
+- `data-remove-item="item"`: suggested marker for the default removable container. Status: **optional** (recommended if `data-remove-target` is not used).
+
 ## Automatic Initialization
 
 The plugin auto-initializes on:

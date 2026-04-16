@@ -48,6 +48,13 @@ That is enough. The plugin initializes automatically when the DOM is ready.
   - Otherwise, it tries `label[for="inputId"]`.
 - On each `change`, it updates target text based on switch state.
 
+## Supported `data-*` attributes
+
+- `data-role="friendly-switch"`: marks the input as plugin subject through auto-init. Status: **required for auto-initialization**.
+- `data-friendly-switch-checked`: text shown when the input is checked. Status: **required**.
+- `data-friendly-switch-unchecked`: text shown when the input is unchecked. Status: **required**.
+- `data-friendly-switch-target`: CSS selector of the destination node where text is written. Status: **optional/conditional** (if omitted, plugin tries `label[for="id"]`; if there is no `id`, this attribute is recommended).
+
 ## Automatic Initialization
 
 The plugin auto-initializes on:

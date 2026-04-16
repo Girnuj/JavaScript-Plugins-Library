@@ -86,17 +86,19 @@ En ambos casos, el plugin usa `fetch` para cargar datos y se inicializa automati
 
 ## Atributos `data-*` soportados
 
-- `data-child-select`
-- `data-children-url`
-- `data-value-property`
-- `data-text-property`
-- `data-group-options-property`
-- `data-group-text-property`
-- `data-grouped`
-- `data-empty-text`
-- `data-auto-select-single`
-- `data-disable-when-empty`
-- `data-loading-class`
+- `data-role="parent-select"`: marca el `<select>` como padre para activar el plugin.
+- `data-role="parent-select"`: marca el `<select>` como padre para activar el plugin por auto-init. Estado: **requerido en auto-inicializacion**.
+- `data-child-select`: selector CSS del `<select>` hijo que sera rellenado. Estado: **requerido**.
+- `data-children-url`: endpoint que devuelve opciones para el hijo segun el valor del padre. Estado: **requerido**.
+- `data-value-property`: nombre de la propiedad usada como `value` en cada `<option>`. Estado: **opcional**.
+- `data-text-property`: nombre de la propiedad usada como texto visible en cada `<option>`. Estado: **opcional**.
+- `data-group-options-property`: propiedad que contiene la lista interna cuando el resultado viene agrupado. Estado: **opcional**.
+- `data-group-text-property`: propiedad usada como etiqueta del grupo (`<optgroup label="...">`). Estado: **opcional**.
+- `data-grouped`: habilita modo de datos agrupados (true/false). Estado: **opcional**.
+- `data-empty-text`: texto de la opcion vacia inicial del select hijo. Estado: **opcional**.
+- `data-auto-select-single`: si solo llega una opcion, la selecciona automaticamente (true/false). Estado: **opcional**.
+- `data-disable-when-empty`: deshabilita el select hijo cuando no hay opciones (true/false). Estado: **opcional**.
+- `data-loading-class`: clase CSS temporal aplicada al select hijo durante la carga. Estado: **opcional**.
 
 ## Inicializacion Manual (opcional)
 

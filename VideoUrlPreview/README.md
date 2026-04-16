@@ -43,6 +43,11 @@ Con eso basta. El plugin se inicializa automaticamente al cargar el DOM.
 - En evento `change` (blur/enter): si el valor queda invalido, limpia el `src` del iframe.
 - Si el input ya tiene valor al inicializar, intenta renderizar la vista previa.
 
+## Atributos `data-*` soportados
+
+- `data-role="video-preview"`: marca el input de URL para auto-inicializacion. Estado: **requerido**.
+- `data-video-preview-target-frame`: selector CSS del `<iframe>` donde se mostrara el video. Estado: **requerido**.
+
 ## Inicializacion Automatica
 
 El plugin se auto-inicializa sobre:

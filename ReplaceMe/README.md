@@ -66,6 +66,12 @@ Puedes configurarlo por atributo o por inicialización manual:
 - atributo opcional: `data-replace-me-method="GET"`
 - opcion JS: `{ replaceSourceUrl: '/ruta', requestMethod: 'GET' }`
 
+## Atributos `data-*` soportados
+
+- `data-role="replace-me"`: marca el trigger que sera reemplazado por HTML remoto en auto-init. Estado: **requerido en auto-inicializacion**.
+- `data-replace-me-src`: URL origen desde donde se solicita el HTML. Estado: **requerido**.
+- `data-replace-me-method`: metodo HTTP de la solicitud (`GET` o `POST`). Estado: **opcional** (por defecto `POST`).
+
 ## Inicializacion Automatica
 
 El plugin se auto-inicializa sobre:

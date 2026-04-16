@@ -48,6 +48,13 @@ Con eso basta. El plugin se inicializa automaticamente al cargar el DOM.
   - Si no existe, intenta `label[for="idDelInput"]`.
 - En cada `change`, actualiza el texto objetivo segun el estado del switch.
 
+## Atributos `data-*` soportados
+
+- `data-role="friendly-switch"`: marca el input como sujeto del plugin por auto-init. Estado: **requerido en auto-inicializacion**.
+- `data-friendly-switch-checked`: texto que se muestra cuando el input esta marcado. Estado: **requerido**.
+- `data-friendly-switch-unchecked`: texto que se muestra cuando el input no esta marcado. Estado: **requerido**.
+- `data-friendly-switch-target`: selector CSS del nodo destino donde se escribe el texto. Estado: **opcional/condicional** (si no se define, el plugin intenta usar `label[for="id"]`; si tampoco hay `id`, conviene declararlo).
+
 ## Inicializacion Automatica
 
 El plugin se auto-inicializa sobre:

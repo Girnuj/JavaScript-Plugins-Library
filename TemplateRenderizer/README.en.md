@@ -57,6 +57,11 @@ For production usage, if you do not need to read the source code, you can includ
 - Supports nested properties, for example: `{{user.profile.email}}`.
 - Missing properties are replaced with an empty string.
 
+## Supported `data-*` attributes
+
+This plugin does not depend on `data-*` attributes.
+Configuration is done through JavaScript using `templateSelector` and instance options.
+
 ## Public API
 
 ```html

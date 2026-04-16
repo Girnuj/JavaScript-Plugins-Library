@@ -59,15 +59,15 @@ Open state:
 
 ## Supported Attributes
 
-- `data-modal="toggle"`: trigger to toggle open/close.
-- `data-modal-target="#selector"`: CSS selector of the modal to control.
-- `data-modal="dismiss"`: internal trigger to close the modal.
-- `data-modal="backdrop"`: backdrop zone to close on click (if not static).
-- `data-role="modal"`: marks a container as a modal subject.
-- `data-modal-static="true|false"`: when `true`, backdrop click does not close.
-- `data-modal-focus="true|false"`: focuses modal and first interactive element on open.
-- `data-modal-keyboard="true|false"`: allows closing with Escape key.
-- `data-modal-show="true|false"`: auto-opens when initialized.
+- `data-modal="toggle"`: trigger to toggle open/close. Status: **optional**.
+- `data-modal-target="#selector"`: CSS selector of the modal to control. Status: **required when using `data-modal="toggle"`**.
+- `data-modal="dismiss"`: internal trigger to close the modal. Status: **optional**.
+- `data-modal="backdrop"`: backdrop zone to close on click (if not static). Status: **optional**.
+- `data-role="modal"`: marks a container as a modal subject for auto-init. Status: **optional** (plugin also detects `role="dialog"` and `<dialog>`).
+- `data-modal-static="true|false"`: when `true`, backdrop click does not close. Status: **optional**.
+- `data-modal-focus="true|false"`: focuses modal and first interactive element on open. Status: **optional**.
+- `data-modal-keyboard="true|false"`: allows closing with Escape key. Status: **optional**.
+- `data-modal-show="true|false"`: auto-opens when initialized. Status: **optional**.
 
 ## Public API
 

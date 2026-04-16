@@ -57,6 +57,11 @@ Para uso en produccion, si no necesitas leer el codigo fuente, puedes incluir la
 - Soporta propiedades anidadas, por ejemplo: `{{user.profile.email}}`.
 - Si una propiedad no existe, reemplaza por cadena vacia.
 
+## Atributos `data-*` soportados
+
+Este plugin no depende de atributos `data-*` para funcionar.
+Su configuracion se realiza por JavaScript mediante `templateSelector` y opciones de instancia.
+
 ## API publica
 
 ```html
