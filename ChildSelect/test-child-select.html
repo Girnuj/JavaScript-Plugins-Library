@@ -114,7 +114,7 @@
     </section>
   </main>
 
-  <script src="./childselect.min.js"></script>
+  <script src="./childSelect.min.js"></script>
   <script>
     // Mock de API para probar localmente sin backend.
     (function () {
@@ -159,12 +159,12 @@
       const originalFetch = window.fetch.bind(window);
 
       window.fetch = function (input, init) {
-        const urlText = typeof input === 'string' ? input : input.url;
-        const url = new URL(urlText, window.location.href);
+        const urlText = typeof input === 'string' ? input : input.url
+            , url = new URL(urlText, window.location.href);
 
         if (url.pathname === '/mock/categories') {
-          const id = url.searchParams.get('id') || '';
-          const payload = mockData[id] || [];
+          const id = url.searchParams.get('id') || ''
+            , payload = mockData[id] || [];
           return Promise.resolve(new Response(JSON.stringify(payload), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -172,8 +172,8 @@
         }
 
         if (url.pathname === '/mock/topics') {
-          const id = url.searchParams.get('id') || '';
-          const payload = mockTopics[id] || [];
+          const id = url.searchParams.get('id') || ''
+            , payload = mockTopics[id] || [];
           return Promise.resolve(new Response(JSON.stringify(payload), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
