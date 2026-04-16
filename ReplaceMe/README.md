@@ -124,3 +124,13 @@ Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-replace-me.html`
 
+## Vista previa del ejemplo
+
+Estado inicial del HTML:
+
+![ReplaceMe ejemplo inicial](./img/image.png)
+
+Estado despues de reemplazar contenido al hacer click en botones del HTML:
+
+![ReplaceMe con contenido reemplazado](./img/image2.png)
+

@@ -124,3 +124,13 @@ You can open the test file included in this project:
 
 - `test-replace-me.html`
 
+## Example Preview
+
+Initial HTML state:
+
+![ReplaceMe initial example](./img/image.png)
+
+State after replacing content by clicking buttons in the HTML:
+
+![ReplaceMe with replaced content](./img/image2.png)
+
