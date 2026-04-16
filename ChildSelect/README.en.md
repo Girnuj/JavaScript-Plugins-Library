@@ -143,3 +143,17 @@ You can open the test file included in this project:
 
 - `test-child-select.html`
 
+## Example Preview
+
+Initial example state (no selection in the first select):
+
+![ChildSelect initial example](./img/image.png)
+
+State after selecting a value in the first select:
+
+![ChildSelect with first select value](./img/image2.png)
+
+State after selecting values in the second and third selects:
+
+![ChildSelect with second and third select values](./img/image3.png)
+

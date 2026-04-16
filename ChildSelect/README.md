@@ -143,3 +143,17 @@ Puedes abrir el archivo de prueba incluido en este proyecto:
 
 - `test-child-select.html`
 
+## Vista previa del ejemplo
+
+Estado inicial del ejemplo (sin seleccionar en el primer select):
+
+![ChildSelect ejemplo inicial](./img/image.png)
+
+Estado cuando se selecciona un valor en el primer select:
+
+![ChildSelect con primer select elegido](./img/image2.png)
+
+Estado cuando se selecciona un valor en el segundo y tercer select:
+
+![ChildSelect con segundo y tercer select elegidos](./img/image3.png)
+
