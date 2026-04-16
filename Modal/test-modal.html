@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test - Modal</title>
+  <style>
+    :root {
+      --bg: #f2f4f8;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #4b5563;
+      --line: #d1d5db;
+      --brand: #0f766e;
+      --brand-strong: #115e59;
+      --danger: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(circle at top right, #e6fffa 0%, var(--bg) 55%);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 32px 18px;
+    }
+
+    .layout {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+    }
+
+    h1,
+    h2 {
+      margin: 0 0 10px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    a.btn-link {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform .12s ease, filter .12s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover,
+    a.btn-link:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .btn-neutral {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: var(--danger);
+    }
+
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 1000;
+    }
+
+    .modal-shell.modal-opened {
+      display: block;
+    }
+
+    .modal-backdrop {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .modal-card {
+      width: min(540px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #dbe2ea;
+      box-shadow: 0 20px 38px rgba(15, 23, 42, 0.3);
+      animation: modalIn .16s ease;
+    }
+
+    .modal-head,
+    .modal-foot {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-foot {
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 14px;
+    }
+
+    #log {
+      margin: 0;
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    #log li {
+      border: 1px solid #dde5ee;
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #fff;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="panel">
+      <h1>Prueba de plugin Modal</h1>
+      <p>Este ejemplo usa apertura por atributos HTML y tambien botones con API manual.</p>
+
+      <div class="actions">
+        <button class="btn-primary" type="button" data-modal="toggle" data-modal-target="#demoModal">
+          Abrir modal (data-*)
+        </button>
+
+        <a href="#" class="btn-link btn-neutral" data-modal="toggle" data-modal-target="#demoModal">
+          Abrir desde enlace
+        </a>
+
+        <button id="btnOpenApi" class="btn-neutral" type="button">Abrir por API</button>
+        <button id="btnToggleApi" class="btn-neutral" type="button">Toggle por API</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos del modal</h2>
+      <ul id="log"></ul>
+    </section>
+  </main>
+
+  <div
+    id="demoModal"
+    class="modal-shell"
+    data-role="modal"
+    data-modal-focus="true"
+    data-modal-keyboard="true"
+    data-modal-static="false"
+    aria-hidden="true">
+    <div class="modal-backdrop" data-modal="backdrop">
+      <div class="modal-card" role="document" aria-label="Formulario de demo">
+        <header class="modal-head">
+          <strong>Modal de ejemplo</strong>
+        </header>
+
+        <section class="modal-body">
+          <p>Puedes cerrarlo con <strong>Escape</strong>, backdrop o boton dismiss.</p>
+
+          <div class="field">
+            <label for="txtName">Nombre</label>
+            <input id="txtName" type="text" placeholder="Escribe algo" />
+          </div>
+        </section>
+
+        <footer class="modal-foot">
+          <button type="button" class="btn-danger" data-modal="dismiss">Cerrar</button>
+          <button id="btnSave" type="button" class="btn-primary">Guardar</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="./modal.min.js"></script>
+  <script>
+    // JS de esta vista: solo demuestra como usar Modal (data-attributes, API manual y eventos).
+    const modalElement = document.getElementById('demoModal');
+    const logElement = document.getElementById('log');
+
+    function addLog(message) {
+      const item = document.createElement('li');
+      item.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+      logElement.prepend(item);
+    }
+
+    modalElement.addEventListener('shown.plugin.modal', function (evt) {
+      const source = evt.detail.relatedTarget;
+      const origin = source && source.textContent ? source.textContent.trim() : 'sin origen';
+      addLog('shown.plugin.modal (origen: ' + origin + ')');
+    });
+
+    modalElement.addEventListener('hidden.plugin.modal', function () {
+      addLog('hidden.plugin.modal');
+    });
+
+    document.getElementById('btnOpenApi').addEventListener('click', function () {
+      const instance = window.Modal.init(modalElement);
+      instance.show(this);
+    });
+
+    document.getElementById('btnToggleApi').addEventListener('click', function () {
+      const instance = window.Modal.init(modalElement);
+      instance.toggle(this);
+    });
+
+    document.getElementById('btnSave').addEventListener('click', function () {
+      const value = document.getElementById('txtName').value.trim();
+      addLog(value === '' ? 'Guardado sin nombre' : 'Guardado: ' + value);
+      const instance = window.Modal.getInstance(modalElement);
+      if (instance) {
+        instance.hide(null, this);
+      }
+    });
+  </script>
+</body>
+</html>

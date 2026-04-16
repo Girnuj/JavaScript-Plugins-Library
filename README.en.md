@@ -26,6 +26,7 @@ If you do not need to read or debug source code, use the minified file for a lig
 - `TemplateRenderizer`: renders HTML templates by replacing placeholders like `{{property}}` and nested paths.
 - `InputSwitchFriendly`: displays friendly labels based on a switch/checkbox state.
 - `ChildSelect`: loads dependent options into a child select based on parent select value.
+- `Modal`: opens and closes modals using HTML triggers with `data-*` attributes and optional API.
 
 ## Repository Structure
 

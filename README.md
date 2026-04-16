@@ -26,6 +26,7 @@ Si no necesitas leer o depurar el codigo fuente, usa el archivo minificado para 
 - `TemplateRenderizer`: renderiza plantillas HTML reemplazando placeholders como `{{propiedad}}` y rutas anidadas.
 - `InputSwitchFriendly`: muestra etiquetas amigables segun el estado de un switch/checkbox.
 - `ChildSelect`: carga opciones dependientes en un select hijo a partir del valor del select padre.
+- `Modal`: abre y cierra modales usando triggers HTML con atributos `data-*` y API opcional.
 
 ## Estructura del Repositorio
 
