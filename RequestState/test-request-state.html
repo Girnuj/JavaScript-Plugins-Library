@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RequestState Demo</title>
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --surface: #ffffff;
+            --text: #1f2a3d;
+            --muted: #5b6b86;
+            --loading: #1d4ed8;
+            --success: #1f8f4a;
+            --error: #c03737;
+            --border: #d8e2f2;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top left, #e9f0ff, var(--bg));
+            color: var(--text);
+            padding: 1.2rem;
+        }
+
+        .layout {
+            max-width: 1020px;
+            margin: 0 auto;
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1.4fr 1fr;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
+        }
+
+        .stack {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .action {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem;
+            background: #fbfdff;
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .action h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .action p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .action label {
+            display: grid;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        .action input {
+            border: 1px solid #cdd8ea;
+            border-radius: 7px;
+            padding: 0.48rem 0.58rem;
+            font: inherit;
+            color: #0f172a;
+            background: #fff;
+        }
+
+        .state-box {
+            border: 1px dashed #c9d6ea;
+            border-radius: 8px;
+            padding: 0.55rem;
+            background: #f7faff;
+            font-family: Consolas, monospace;
+            font-size: 0.82rem;
+            transition: border-color .2s ease, background .2s ease;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 8px;
+            background: #0f4bc6;
+            color: #fff;
+            padding: 0.55rem 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .is-loading {
+            border-color: rgba(29, 78, 216, 0.4);
+            background: rgba(29, 78, 216, 0.06);
+        }
+
+        .is-success {
+            border-color: rgba(31, 143, 74, 0.45);
+            background: rgba(31, 143, 74, 0.08);
+        }
+
+        .is-error {
+            border-color: rgba(192, 55, 55, 0.45);
+            background: rgba(192, 55, 55, 0.08);
+        }
+
+        .demo-loading {
+            border-color: rgba(125, 42, 232, 0.45);
+            background: rgba(125, 42, 232, 0.08);
+        }
+
+        .demo-success {
+            border-color: rgba(9, 138, 110, 0.5);
+            background: rgba(9, 138, 110, 0.1);
+        }
+
+        .demo-error {
+            border-color: rgba(229, 57, 53, 0.5);
+            background: rgba(229, 57, 53, 0.1);
+        }
+
+        .demo-idle {
+            border-color: #9db4d8;
+            background: #f6faff;
+        }
+
+        .own-loading {
+            border-color: rgba(147, 51, 234, 0.45);
+            background: rgba(147, 51, 234, 0.12);
+        }
+
+        .own-success {
+            border-color: rgba(22, 163, 74, 0.5);
+            background: rgba(22, 163, 74, 0.12);
+        }
+
+        .own-error {
+            border-color: rgba(220, 38, 38, 0.5);
+            background: rgba(220, 38, 38, 0.12);
+        }
+
+        .own-idle {
+            border-color: rgba(55, 65, 81, 0.35);
+            background: rgba(243, 244, 246, 0.8);
+        }
+
+        .logs {
+            min-height: 180px;
+            border-radius: 8px;
+            padding: 0.7rem;
+            background: #0f2746;
+            color: #cae5ff;
+            font-size: 0.78rem;
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="layout">
+        <section class="panel">
+            <h1>RequestState - Demo</h1>
+            <p>Ejemplos para acelerar desarrollo y pruebas UI con estados de request declarativos.</p>
+
+            <div class="stack">
+                <form
+                    id="integratedForm"
+                    class="action"
+                    data-form-validate
+                    data-form-request
+                    data-form-response="json"
+                    action="https://jsonplaceholder.typicode.com/posts"
+                    method="POST"
+                    data-form-method="POST"
+                    data-form-same-origin="false"
+                    data-form-timeout="9000"
+                    data-form-retry-count="1"
+                    data-form-retry-delay="350"
+                    data-form-target="#integratedResponse"
+                >
+                    <h3>Integracion: FormValidate + FormRequest + RequestState</h3>
+                    <p>FormValidate valida, FormRequest envia y RequestState solo gestiona estado visual del boton.</p>
+
+                    <label>
+                        Nombre
+                        <input type="text" name="name" required />
+                    </label>
+
+                    <label>
+                        Correo
+                        <input type="email" name="email" required />
+                    </label>
+
+                    <button
+                        id="integratedSubmit"
+                        type="submit"
+                        class="btn"
+                        data-request-state
+                        data-rs-target="#integratedState"
+                        data-rs-message-target="#integratedMessage"
+                        data-rs-loading-text="Enviando formulario..."
+                        data-rs-success-text="Enviado correctamente"
+                        data-rs-error-text="Fallo al enviar"
+                        data-rs-disable-on-loading="true"
+                    >
+                        Enviar integrado
+                    </button>
+
+                    <div id="integratedState" class="state-box" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="integratedMessage" data-rs-message></span>
+                    </div>
+
+                    <pre id="integratedResponse" class="state-box"></pre>
+                </form>
+
+                <article class="action">
+                    <h3>Mock success</h3>
+                    <p>Simula una accion exitosa sin backend.</p>
+                    <button
+                        class="btn"
+                        data-request-state
+                        data-rs-target="#stateA"
+                        data-rs-message-target="#messageA"
+                        data-rs-loading-text="Guardando cambios..."
+                        data-rs-success-text="Guardado correctamente"
+                        data-rs-error-text="Error al guardar"
+                        data-rs-mock="success"
+                        data-rs-delay="900"
+                        data-rs-auto-reset="1500"
+                        data-rs-name-action="save-profile"
+                    >
+                        Guardar perfil
+                    </button>
+                    <div id="stateA" class="state-box" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="messageA" data-rs-message></span>
+                    </div>
+                </article>
+
+                <article class="action">
+                    <h3>Mock error</h3>
+                    <p>Fuerza el estado de error para probar feedback visual.</p>
+                    <button
+                        class="btn"
+                        data-request-state
+                        data-rs-target="#stateB"
+                        data-rs-message-target="#messageB"
+                        data-rs-loading-class="demo-loading"
+                        data-rs-success-class="demo-success"
+                        data-rs-error-class="demo-error"
+                        data-rs-idle-class="demo-idle"
+                        data-rs-loading-text="Aplicando cambios..."
+                        data-rs-success-text="Aplicado"
+                        data-rs-error-text="No se pudo aplicar"
+                        data-rs-mock="error"
+                        data-rs-delay="700"
+                        data-rs-auto-reset="1800"
+                        data-rs-name-action="apply-discount"
+                    >
+                        Aplicar descuento
+                    </button>
+                    <div id="stateB" class="state-box" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="messageB" data-rs-message></span>
+                    </div>
+                </article>
+
+                <article class="action">
+                    <h3>Request real (GET)</h3>
+                    <p>Consulta endpoint real para probar estado success con fetch.</p>
+                    <button
+                        class="btn"
+                        data-request-state
+                        data-rs-target="#stateC"
+                        data-rs-message-target="#messageC"
+                        data-rs-loading-text="Consultando endpoint..."
+                        data-rs-success-text="Respuesta recibida"
+                        data-rs-error-text="No se pudo consultar"
+                        data-rs-send="true"
+                        data-rs-endpoint="https://jsonplaceholder.typicode.com/todos/1"
+                        data-rs-method="GET"
+                        data-rs-timeout="9000"
+                        data-rs-delay="300"
+                        data-rs-auto-reset="2200"
+                        data-rs-name-action="fetch-todo"
+                    >
+                        Probar request GET
+                    </button>
+                    <div id="stateC" class="state-box" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="messageC" data-rs-message></span>
+                    </div>
+                </article>
+
+                <article class="action">
+                    <h3>Clases propias por atributo</h3>
+                    <p>Ejemplo explicito usando data-rs-loading-class, data-rs-success-class, data-rs-error-class y data-rs-idle-class.</p>
+                    <button
+                        class="btn"
+                        data-request-state
+                        data-rs-target="#stateD"
+                        data-rs-message-target="#messageD"
+                        data-rs-loading-class="own-loading"
+                        data-rs-success-class="own-success"
+                        data-rs-error-class="own-error"
+                        data-rs-idle-class="own-idle"
+                        data-rs-loading-text="Procesando con clases propias..."
+                        data-rs-success-text="Exito con estilo propio"
+                        data-rs-error-text="Error con estilo propio"
+                        data-rs-mock="success"
+                        data-rs-delay="800"
+                        data-rs-auto-reset="1700"
+                        data-rs-name-action="custom-classes"
+                    >
+                        Probar clases propias
+                    </button>
+                    <div id="stateD" class="state-box own-idle" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="messageD" data-rs-message></span>
+                    </div>
+                </article>
+
+                <form
+                    class="action"
+                    data-request-state
+                    data-rs-target="#stateE"
+                    data-rs-message-target="#messageE"
+                    data-rs-response-target="#responseE"
+                    data-rs-response-mode="json"
+                    data-rs-loading-text="Enviando formulario..."
+                    data-rs-success-text="Formulario enviado"
+                    data-rs-error-text="Error al enviar formulario"
+                    data-rs-send="true"
+                    data-rs-endpoint="https://jsonplaceholder.typicode.com/posts"
+                    data-rs-method="POST"
+                    data-rs-headers-json='{"Content-Type":"application/json"}'
+                    data-rs-retry-count="1"
+                    data-rs-retry-delay="300"
+                    data-rs-retry-statuses="408,429,500,502,503,504"
+                    data-rs-timeout="9000"
+                    data-rs-name-action="submit-form"
+                    data-rs-auto-reset="2300"
+                >
+                    <h3>Submit de formulario + response target</h3>
+                    <p>Este ejemplo usa submit real del form y renderiza respuesta JSON en un target dedicado.</p>
+
+                    <label>
+                        Nombre
+                        <input type="text" name="name" value="Samuel" />
+                    </label>
+
+                    <label>
+                        Correo
+                        <input type="email" name="email" value="samuel@example.com" />
+                    </label>
+
+                    <button type="submit" class="btn">Enviar formulario</button>
+
+                    <div id="stateE" class="state-box" data-rs-state="idle">
+                        Estado: <strong data-rs-field-state>idle</strong> | <span id="messageE" data-rs-message></span>
+                    </div>
+
+                    <pre id="responseE" class="state-box" data-rs-response></pre>
+                </form>
+            </div>
+        </section>
+
+        <aside class="panel">
+            <h2>Eventos del plugin</h2>
+            <p>Registro en tiempo real de cambios de estado y resultado.</p>
+            <div id="logs" class="logs"></div>
+        </aside>
+    </main>
+
+    <script src="../FormValidate/formValidate.min.js"></script>
+    <script src="../FormRequest/formRequest.min.js"></script>
+    <script src="./requestState.min.js"></script>
+    <script>
+        (function () {
+            const logs = document.querySelector('#logs')
+                , triggers = Array.from(document.querySelectorAll('[data-request-state]'));
+
+            const integratedForm = document.querySelector('#integratedForm')
+                , integratedSubmit = document.querySelector('#integratedSubmit')
+                , integratedState = document.querySelector('#integratedState');
+
+            if (integratedForm && integratedSubmit && integratedState && window.RequestState) {
+                const integratedRs = window.RequestState.getInstance(integratedSubmit) || window.RequestState.init(integratedSubmit);
+
+                // El submit lo controla FormRequest; RequestState solo refleja estado visual del boton.
+                integratedRs.unbind();
+
+                const baseContext = {
+                    payload: { action: 'integrated-submit' },
+                    trigger: integratedSubmit,
+                    target: integratedState,
+                    response: null,
+                    error: null,
+                };
+
+                integratedForm.addEventListener('before.plugin.formRequest', function () {
+                    integratedRs.setState('loading', baseContext);
+                });
+
+                integratedForm.addEventListener('success.plugin.formRequest', function (evt) {
+                    baseContext.response = evt.detail || null;
+                    baseContext.error = null;
+                    integratedRs.setState('success', baseContext);
+                });
+
+                integratedForm.addEventListener('error.plugin.formRequest', function (evt) {
+                    baseContext.error = evt.detail && evt.detail.error
+                        ? evt.detail.error
+                        : new Error('Request error');
+                    integratedRs.setState('error', baseContext);
+                });
+
+                integratedForm.addEventListener('complete.plugin.formRequest', function () {
+                    // FormRequest re-habilita botones al completar; mantenemos el bloqueo
+                    // sin re-emitir el mismo estado (evita logs duplicados de success/error).
+                    const shouldDisable = integratedRs.state !== 'idle';
+                    integratedSubmit.disabled = shouldDisable;
+                    integratedSubmit.setAttribute('aria-disabled', String(shouldDisable));
+
+                    window.setTimeout(function () {
+                        integratedRs.setState('idle', baseContext);
+                    }, 1600);
+                });
+            }
+
+            function log(line) {
+                logs.textContent += line + '\n';
+            }
+
+            triggers.forEach(function (trigger) {
+                trigger.addEventListener('state.plugin.requestState', function (evt) {
+                    const state = evt.detail.state
+                        , target = evt.detail.target
+                        , stateField = target.querySelector('[data-rs-field-state]');
+
+                    if (stateField) {
+                        stateField.textContent = state;
+                    }
+
+                    log('state: ' + state + ' | action=' + (evt.detail.context.payload.action || '-'));
+                });
+
+                trigger.addEventListener('success.plugin.requestState', function (evt) {
+                    const status = evt.detail.response ? evt.detail.response.status : 'n/a';
+                    log('success: status=' + status);
+                });
+
+                trigger.addEventListener('error.plugin.requestState', function (evt) {
+                    const message = evt.detail.error ? evt.detail.error.message : 'unknown error';
+                    log('error: ' + message);
+                });
+
+                trigger.addEventListener('complete.plugin.requestState', function () {
+                    log('complete: ciclo finalizado');
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

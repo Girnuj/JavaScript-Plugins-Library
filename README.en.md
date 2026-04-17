@@ -27,6 +27,7 @@ These are automatically initialized when they detect the necessary HTML attribut
 - `ModalSteps`: runs step-based modal flows with remote content loading, `POST`/`GET` support, and events to control each stage.
 - `NotificationPush`: triggers toast notifications and sends dynamic `data-np-*` payload to a receiver or endpoint without local cache.
 - `ReplaceMe`: replaces a trigger with remote HTML fetched through `POST` or `GET`.
+- `RequestState`: centralizes `idle/loading/success/error` states for async actions, with mock mode for QA and optional request flow.
 - `TemplateRenderizer`: renders HTML templates by replacing placeholders like `{{property}}` and nested paths.
 - `UIState`: lets teams preview UI states like loading, empty, error, or success for QA and design workflows.
 - `VideoUrlPreview`: previews YouTube videos in an `<iframe>` from a URL.
