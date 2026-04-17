@@ -2,7 +2,7 @@
 
 ## Introduccion
 
-Todos hemos tenido que resolver alguna vez tareas como abrir un modal, eliminar un elemento del DOM o moverlo de lugar.
+Todos hemos tenido que resolver alguna vez tareas como abrir un modal, eliminar un elemento del DOM o moverlo de lugar, enviar un form, validar un input.
 Este repositorio es una coleccion de plugins utiles en JavaScript nativo para facilitar ese trabajo sin depender de librerias externas ni escribir demasiado codigo repetitivo, la idea es que tomes lo que necesites cuando lo necesites y solo eso.
 
 Cada plugin incluye su version fuente (`.js`) para que puedas adaptarlo a tu gusto, y su version minificada (`.min.js`) para usarla directamente.
@@ -88,3 +88,21 @@ En cada carpeta de plugin:
 ## Objetivo
 
 Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos copiando solamente el JS(pluginName.js) o su version .min e incorporandolos en sus proyectos o vistas necesarias de una forma muy simple y liviana.
+
+## Como Contribuir
+
+Si quieres contribuir con mejoras o un nuevo plugin:
+
+1. Crea (o actualiza) la carpeta del plugin siguiendo la estructura del repositorio.
+2. Implementa el archivo fuente (`plugin.js`) manteniendo inicializacion por `data-*` y API publica cuando aplique.
+3. Agrega/actualiza documentacion en `README.md` y `README.en.md` del plugin.
+4. Incluye un HTML de prueba (`test-pluginName.html`) con ejemplos reales de uso.
+5. Genera la version minificada (`plugin.min.js`) antes de publicar cambios.
+6. Verifica que no haya errores y que los ejemplos funcionen en navegador.
+7. Actualiza `README.md` y `README.en.md` raiz para listar el plugin (o documentar el cambio).
+
+Buenas practicas sugeridas:
+
+- Mantener compatibilidad con ECMAScript 2020.
+- Evitar dependencias externas innecesarias.
+- No romper API publica existente sin documentar claramente el cambio.
