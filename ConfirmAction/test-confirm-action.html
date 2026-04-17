@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test - ConfirmAction</title>
+  <style>
+    :root {
+      --bg: #f4f8fb;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --line: #dbe3ec;
+      --brand: #1d4ed8;
+      --danger: #b91c1c;
+      --muted: #475569;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top right, #dbeafe, #f8fafc 50%);
+    }
+
+    .layout {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid #dbe3ec;
+      border-radius: 10px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: #f8fafc;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    button, a.btn {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    button.primary {
+      background: var(--brand);
+      color: #ffffff;
+    }
+
+    button.danger, a.danger {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    .log {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .log li {
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 8px 10px;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    .confirm-box {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 30;
+    }
+
+    .confirm-box.is-open {
+      display: flex;
+    }
+
+    .confirm-card {
+      width: min(420px, 100%);
+      border: 1px solid #dbe3ec;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      box-shadow: 0 14px 30px rgba(2, 6, 23, 0.2);
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .ghost {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body data-pp-observe-root-confirm-action>
+  <main class="layout">
+    <section class="panel">
+      <h1>Prueba de plugin <code>ConfirmAction</code></h1>
+      <p>Este test muestra confirmaciones antes de acciones sensibles en botones, links y formularios.</p>
+    </section>
+
+    <section class="panel grid">
+      <article class="card">
+        <h3>Accion destructiva (boton)</h3>
+        <button
+          id="btnDelete"
+          class="danger"
+          data-confirm-action
+          data-ca-title="Eliminar registro"
+          data-ca-message="Esta accion es permanente. Deseas eliminar?"
+        >
+          Eliminar registro
+        </button>
+      </article>
+
+      <article class="card">
+        <h3>Accion por link</h3>
+        <a
+          id="linkCancel"
+          class="btn danger"
+          href="#cancelado"
+          data-confirm-action
+          data-ca-title="Cancelar pedido"
+          data-ca-message="Se cancelara el pedido actual. Continuar?"
+        >
+          Cancelar pedido
+        </a>
+      </article>
+
+      <article class="card">
+        <h3>Accion por submit</h3>
+        <form
+          id="formPublish"
+          data-confirm-action
+          data-ca-title="Publicar cambios"
+          data-ca-message="Se publicaran cambios en produccion. Continuar?"
+          action="#publicado"
+          method="post"
+        >
+          <button type="submit" class="primary">Publicar</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h3>Contenedor personalizado</h3>
+        <button
+          id="btnReset"
+          class="danger"
+          data-confirm-action
+          data-ca-title="Resetear configuracion"
+          data-ca-message="Se perderan cambios no guardados. Deseas continuar?"
+          data-ca-dialog="#customConfirm"
+        >
+          Resetear configuracion
+        </button>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos</h2>
+      <ul id="log" class="log"></ul>
+    </section>
+  </main>
+
+  <div id="customConfirm" class="confirm-box" hidden>
+    <section class="confirm-card" aria-modal="true" role="dialog" tabindex="-1">
+      <h3 data-ca-dialog-title>Confirmar accion</h3>
+      <p data-ca-dialog-message></p>
+      <div class="confirm-actions">
+        <button type="button" class="ghost" data-ca-cancel>Cancelar</button>
+        <button type="button" class="danger" data-ca-confirm>Confirmar</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="./confirmAction.js"></script>
+  <script>
+    (function () {
+      const log = document.getElementById('log')
+          , subjects = document.querySelectorAll('[data-confirm-action]');
+
+      function addLog(text) {
+        const li = document.createElement('li');
+        li.textContent = new Date().toLocaleTimeString() + ' - ' + text;
+        log.prepend(li);
+      }
+
+      subjects.forEach(function (subject) {
+        subject.addEventListener('before.plugin.confirmAction', function (evt) {
+          addLog('before.plugin.confirmAction -> ' + evt.detail.actionType);
+        });
+
+        subject.addEventListener('confirmed.plugin.confirmAction', function (evt) {
+          addLog('confirmed.plugin.confirmAction -> ' + evt.detail.actionType);
+        });
+
+        subject.addEventListener('cancelled.plugin.confirmAction', function (evt) {
+          addLog('cancelled.plugin.confirmAction -> ' + evt.detail.actionType);
+        });
+      });
+
+      // Evita navegacion real en la demo para mantener el log visible.
+      const link = document.getElementById('linkCancel');
+      link.addEventListener('click', function (evt) {
+        if (link.getAttribute('href') && link.getAttribute('href').startsWith('#')) {
+          evt.preventDefault();
+        }
+      });
+
+      // Evita submit real para visualizar confirmaciones en la misma pagina.
+      const form = document.getElementById('formPublish');
+      form.addEventListener('submit', function (evt) {
+        evt.preventDefault();
+        addLog('submit nativo bloqueado en demo (sin backend)');
+      });
+    })();
+  </script>
+</body>
+</html>

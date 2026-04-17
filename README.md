@@ -17,6 +17,7 @@ Estos se inicializan solos al detectar los atributos HTML necesarios, asi que no
 ## Plugins Disponibles
 
 - [ChildSelect](ChildSelect/): carga opciones dependientes en un select hijo a partir del valor del select padre.
+- [ConfirmAction](ConfirmAction/): solicita confirmacion antes de acciones sensibles o destructivas en botones, links y formularios.
 - [FormRequest](FormRequest/): extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
 - [FormValidate](FormValidate/): agrega validaciones extendidas por `data-*` para reglas de negocio y bloquea envio cuando no se cumplen.
 - [ImgUploadPreview](ImgUploadPreview/): previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
@@ -102,6 +103,7 @@ Regla de prioridad: root directo por plugin > root por selector en `<html>` > `d
 - `NotificationPush`: `data-pp-observe-root-notification-push`
 - `UIState`: `data-pp-observe-root-ui-state`
 - `ChildSelect`: `data-pp-observe-root-child-select`
+- `ConfirmAction`: `data-pp-observe-root-confirm-action`
 - `ImgUploadPreview`: `data-pp-observe-root-img-upload-preview`
 - `VideoUrlPreview`: `data-pp-observe-root-video-url-preview`
 - `ItemMover`: `data-pp-observe-root-item-mover`
