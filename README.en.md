@@ -16,21 +16,21 @@ These are automatically initialized when they detect the necessary HTML attribut
 
 ## Available Plugins
 
-- `ChildSelect`: loads dependent options into a child select based on parent select value.
-- `FormRequest`: extends native forms with async `fetch` submission, field error handling, security controls, and retry/timeout behavior.
-- `FormValidate`: adds extended `data-*` business-rule validations and blocks submit when rules fail.
-- `ImgUploadPreview`: previews selected image files in an `<img>` element.
-- `InputSwitchFriendly`: displays friendly labels based on a switch/checkbox state.
-- `ItemMover`: moves list elements up or down using `data-*` trigger attributes.
-- `ItemRemover`: removes container elements from a delete trigger.
-- `Modal`: opens and closes modals using HTML triggers with `data-*` attributes and optional API.
-- `ModalSteps`: runs step-based modal flows with remote content loading, `POST`/`GET` support, and events to control each stage.
-- `NotificationPush`: triggers toast notifications and sends dynamic `data-np-*` payload to a receiver or endpoint without local cache.
-- `ReplaceMe`: replaces a trigger with remote HTML fetched through `POST` or `GET`.
-- `RequestState`: centralizes `idle/loading/success/error` states for async actions, with mock mode for QA and optional request flow.
-- `TemplateRenderizer`: renders HTML templates by replacing placeholders like `{{property}}` and nested paths.
-- `UIState`: lets teams preview UI states like loading, empty, error, or success for QA and design workflows.
-- `VideoUrlPreview`: previews YouTube videos in an `<iframe>` from a URL.
+- [ChildSelect](ChildSelect/): loads dependent options into a child select based on parent select value.
+- [FormRequest](FormRequest/): extends native forms with async `fetch` submission, field error handling, security controls, and retry/timeout behavior.
+- [FormValidate](FormValidate/): adds extended `data-*` business-rule validations and blocks submit when rules fail.
+- [ImgUploadPreview](ImgUploadPreview/): previews selected image files in an `<img>` element.
+- [InputSwitchFriendly](InputSwitchFriendly/): displays friendly labels based on a switch/checkbox state.
+- [ItemMover](ItemMover/): moves list elements up or down using `data-*` trigger attributes.
+- [ItemRemover](ItemRemover/): removes container elements from a delete trigger.
+- [Modal](Modal/): opens and closes modals using HTML triggers with `data-*` attributes and optional API.
+- [ModalSteps](ModalSteps/): runs step-based modal flows with remote content loading, `POST`/`GET` support, and events to control each stage.
+- [NotificationPush](NotificationPush/): triggers toast notifications and sends dynamic `data-np-*` payload to a receiver or endpoint without local cache.
+- [ReplaceMe](ReplaceMe/): replaces a trigger with remote HTML fetched through `POST` or `GET`.
+- [RequestState](RequestState/): centralizes `idle/loading/success/error` states for async actions, with mock mode for QA and optional request flow.
+- [TemplateRenderizer](TemplateRenderizer/): renders HTML templates by replacing placeholders like `{{property}}` and nested paths.
+- [UIState](UIState/): lets teams preview UI states like loading, empty, error, or success for QA and design workflows.
+- [VideoUrlPreview](VideoUrlPreview/): previews YouTube videos in an `<iframe>` from a URL.
 
 ## General Requirements
 

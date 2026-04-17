@@ -16,21 +16,21 @@ Estos se inicializan solos al detectar los atributos HTML necesarios, asi que no
 
 ## Plugins Disponibles
 
-- `ChildSelect`: carga opciones dependientes en un select hijo a partir del valor del select padre.
-- `FormRequest`: extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
-- `FormValidate`: agrega validaciones extendidas por `data-*` para reglas de negocio y bloquea envio cuando no se cumplen.
-- `ImgUploadPreview`: previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
-- `InputSwitchFriendly`: muestra etiquetas amigables segun el estado de un switch/checkbox.
-- `ItemMover`: mueve elementos de una lista hacia arriba o hacia abajo usando triggers con atributos `data-*`.
-- `ItemRemover`: elimina elementos contenedores desde un trigger de borrado.
-- `Modal`: abre y cierra modales usando triggers HTML con atributos `data-*` y API opcional.
-- `ModalSteps`: ejecuta flujos de modal por pasos, con carga remota de contenido, soporte `POST`/`GET` y eventos para controlar cada etapa.
-- `NotificationPush`: dispara notificaciones tipo toast y envia payload dinamico por `data-np-*` a un receptor o endpoint sin cache local.
-- `ReplaceMe`: reemplaza un trigger por HTML remoto obtenido mediante `POST` o `GET`.
-- `RequestState`: centraliza estados `idle/loading/success/error` en acciones async, con modo mock para QA y request opcional.
-- `TemplateRenderizer`: renderiza plantillas HTML reemplazando placeholders como `{{propiedad}}` y rutas anidadas.
-- `UIState`: permite previsualizar estados de UI como loading, empty, error o success en componentes para QA y diseno.
-- `VideoUrlPreview`: previsualiza videos de YouTube en un `<iframe>` a partir de una URL.
+- [ChildSelect](ChildSelect/): carga opciones dependientes en un select hijo a partir del valor del select padre.
+- [FormRequest](FormRequest/): extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
+- [FormValidate](FormValidate/): agrega validaciones extendidas por `data-*` para reglas de negocio y bloquea envio cuando no se cumplen.
+- [ImgUploadPreview](ImgUploadPreview/): previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
+- [InputSwitchFriendly](InputSwitchFriendly/): muestra etiquetas amigables segun el estado de un switch/checkbox.
+- [ItemMover](ItemMover/): mueve elementos de una lista hacia arriba o hacia abajo usando triggers con atributos `data-*`.
+- [ItemRemover](ItemRemover/): elimina elementos contenedores desde un trigger de borrado.
+- [Modal](Modal/): abre y cierra modales usando triggers HTML con atributos `data-*` y API opcional.
+- [ModalSteps](ModalSteps/): ejecuta flujos de modal por pasos, con carga remota de contenido, soporte `POST`/`GET` y eventos para controlar cada etapa.
+- [NotificationPush](NotificationPush/): dispara notificaciones tipo toast y envia payload dinamico por `data-np-*` a un receptor o endpoint sin cache local.
+- [ReplaceMe](ReplaceMe/): reemplaza un trigger por HTML remoto obtenido mediante `POST` o `GET`.
+- [RequestState](RequestState/): centraliza estados `idle/loading/success/error` en acciones async, con modo mock para QA y request opcional.
+- [TemplateRenderizer](TemplateRenderizer/): renderiza plantillas HTML reemplazando placeholders como `{{propiedad}}` y rutas anidadas.
+- [UIState](UIState/): permite previsualizar estados de UI como loading, empty, error o success en componentes para QA y diseno.
+- [VideoUrlPreview](VideoUrlPreview/): previsualiza videos de YouTube en un `<iframe>` a partir de una URL.
 
 ## Requisitos Generales
 
