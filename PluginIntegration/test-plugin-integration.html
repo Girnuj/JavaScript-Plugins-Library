@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test - Integracion de Plugins</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #dbe3ec;
+      --brand: #0f766e;
+      --brand-2: #1d4ed8;
+      --danger: #b91c1c;
+      --warn: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, #dbeafe, transparent 35%),
+        radial-gradient(circle at top left, #dcfce7, transparent 36%),
+        var(--bg);
+    }
+
+    .layout {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--card);
+      box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    h1, h2, h3 { margin: 0; }
+    p { margin: 0; color: var(--muted); }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .btn-secondary { background: var(--brand-2); }
+    .btn-danger { background: var(--danger); }
+    .btn-warn { background: var(--warn); color: #111827; }
+
+    .state-box {
+      border: 1px dashed #94a3b8;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    .logs {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .logs li {
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 10px;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 1200;
+    }
+
+    .modal-shell.modal-opened {
+      display: block;
+    }
+
+    .modal-backdrop {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.56);
+    }
+
+    .modal-card {
+      width: min(620px, 100%);
+      border: 1px solid #dbe3ec;
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 20px 38px rgba(2, 6, 23, 0.3);
+    }
+
+    .modal-head,
+    .modal-foot {
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-foot {
+      border-bottom: 0;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .modal-body {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      font: inherit;
+    }
+
+    .fv-error {
+      min-height: 1.1rem;
+      font-size: 13px;
+      color: #b91c1c;
+    }
+
+    .summary {
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      background: #fff1f2;
+      color: #9f1239;
+      padding: 8px 10px;
+    }
+
+    .summary[hidden] { display: none; }
+
+    .is-invalid {
+      border-color: #ef4444;
+      background: #fff5f5;
+    }
+
+    .is-valid {
+      border-color: #22c55e;
+      background: #f3fff7;
+    }
+
+    .is-loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .confirm-box {
+      position: fixed;
+      inset: 0;
+      z-index: 1400;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.58);
+    }
+
+    .confirm-box.is-open { display: flex; }
+
+    .confirm-card {
+      width: min(440px, 100%);
+      border: 1px solid #dbe3ec;
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .ghost {
+      background: #e2e8f0;
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+  <!-- Panel principal con accesos rapidos a cada flujo de integracion -->
+  <main class="layout">
+    <section class="panel">
+      <h1>Integracion de Plugins</h1>
+      <p>Demo conjunto usando Modal + FormValidate + ConfirmAction + FormRequest + RequestState.</p>
+      <div class="row">
+        <button type="button" data-modal="toggle" data-modal-target="#flowModal">Abrir flujo integrado</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>RequestState independiente</h2>
+      <!-- Este bloque muestra RequestState como accion aislada + NotificationPush -->
+      <p>Accion auxiliar para mostrar convivencia con NotificationPush en una misma vista.</p>
+      <div class="row">
+        <button
+          type="button"
+          id="btnNotify"
+          class="btn-secondary"
+          data-request-state
+          data-rs-target="#notifyState"
+          data-rs-message-target="#notifyMessage"
+          data-rs-loading-text="Enviando notificacion..."
+          data-rs-success-text="Notificacion enviada"
+          data-rs-error-text="No se pudo notificar"
+          data-rs-mock="success"
+          data-rs-delay="900"
+          data-rs-auto-reset="1500"
+        >
+          Enviar notificacion al cliente
+        </button>
+      </div>
+      <div id="notifyState" class="state-box" data-rs-state="idle">
+        Estado: <strong data-rs-field-state>idle</strong> | <span id="notifyMessage" data-rs-message></span>
+      </div>
+      <div id="notifyPushReceiver" class="state-box">
+        Ultima push: <strong data-np-field="title">-</strong> | <span data-np-field="message">-</span>
+      </div>
+
+      <button
+        type="button"
+        id="requestStatePushTrigger"
+        data-notification-push
+        data-np-title="Notificacion enviada"
+        data-np-message="RequestState confirmo envio al cliente"
+        data-np-type="success"
+        data-np-duration="2200"
+        data-np-target="#notifyPushReceiver"
+        data-np-name-source="requestState"
+        data-np-name-channel="cliente"
+        hidden
+      >
+        Push por RequestState
+      </button>
+    </section>
+
+    <section class="panel">
+      <h2>FormValidate + FormRequest + RequestState</h2>
+      <!-- Flujo recomendado: FormValidate bloquea errores, FormRequest envia, RequestState refleja estado -->
+      <p>Ejemplo puntual de validacion + request + estado visual en un mismo submit.</p>
+
+      <form
+        id="simpleForm"
+        data-form-validate
+        data-form-request
+        data-form-target="#simpleResult"
+        data-form-response="json"
+        action="/api/profile"
+        method="post"
+      >
+        <input type="hidden" id="simpleRequiredFlag" value="on" />
+
+        <div class="summary" data-form-validate-summary hidden></div>
+
+        <div class="field">
+          <label for="simpleName">Nombre</label>
+          <input
+            id="simpleName"
+            name="name"
+            type="text"
+            required
+            data-fv-required-if="#simpleRequiredFlag:on"
+            data-fv-message-required-if="El nombre es obligatorio."
+            placeholder="Nombre del cliente"
+          />
+          <div class="fv-error" data-fv-message-for="name"></div>
+        </div>
+
+        <div class="field">
+          <label for="simpleMail">Email</label>
+          <input
+            id="simpleMail"
+            name="email"
+            type="text"
+            required
+            data-fv-required-if="#simpleRequiredFlag:on"
+            data-fv-message-required-if="El email es obligatorio."
+            data-fv-no-whitespace="true"
+            data-fv-message-no-whitespace="El email no debe tener espacios."
+            placeholder="cliente@correo.com"
+          />
+          <div class="fv-error" data-fv-message-for="email"></div>
+        </div>
+
+        <div class="field">
+          <label for="simpleMailConfirm">Confirmar email</label>
+          <input
+            id="simpleMailConfirm"
+            name="emailConfirm"
+            type="text"
+            required
+            data-fv-required-if="#simpleRequiredFlag:on"
+            data-fv-message-required-if="Debes confirmar el email."
+            data-fv-equals="#simpleMail"
+            data-fv-message-equals="Debe coincidir con el email."
+            placeholder="repite el email"
+          />
+          <div class="fv-error" data-fv-message-for="emailConfirm"></div>
+        </div>
+
+        <div class="row">
+          <button
+            id="simpleSubmit"
+            type="submit"
+            class="btn-secondary"
+            data-request-state
+            data-rs-target="#simpleState"
+            data-rs-message-target="#simpleMessage"
+            data-rs-loading-text="Procesando formulario..."
+            data-rs-success-text="Formulario enviado"
+            data-rs-error-text="No se pudo enviar"
+            data-rs-disable-on-loading="true"
+          >
+            Enviar formulario simple
+          </button>
+        </div>
+      </form>
+
+      <div id="simpleState" class="state-box" data-rs-state="idle">
+        Estado: <strong data-rs-field-state>idle</strong> | <span id="simpleMessage" data-rs-message></span>
+      </div>
+
+      <pre id="simpleResult" class="state-box"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Resultado de FormRequest</h2>
+      <div id="checkoutResult" class="state-box">Aun no hay envio.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos</h2>
+      <ul id="logs" class="logs"></ul>
+    </section>
+  </main>
+
+  <div
+    id="flowModal"
+    class="modal-shell"
+    data-role="modal"
+    data-modal-focus="true"
+    data-modal-keyboard="true"
+    data-modal-static="false"
+    aria-hidden="true"
+  >
+    <!-- Modal para escenario de compra con confirmacion previa -->
+    <div class="modal-backdrop" data-modal="backdrop">
+      <div class="modal-card" role="document" aria-label="Checkout rapido">
+        <header class="modal-head">
+          <strong>Checkout rapido</strong>
+        </header>
+
+        <section class="modal-body">
+          <form
+            id="checkoutForm"
+            data-form-validate
+            data-form-request
+            data-confirm-action
+            data-ca-dialog="#confirmSubmit"
+            data-form-target="#checkoutResult"
+            data-form-response="html"
+            data-form-retry-count="1"
+            data-form-retry-delay="250"
+            action="/api/checkout"
+            method="post"
+          >
+            <div class="summary" data-form-validate-summary hidden></div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="text"
+                required
+                data-fv-no-whitespace="true"
+                data-fv-message-no-whitespace="El email no debe contener espacios."
+                placeholder="cliente@correo.com"
+              />
+              <div class="fv-error" data-fv-message-for="email"></div>
+            </div>
+
+            <div class="field">
+              <label for="emailConfirm">Confirmar email</label>
+              <input
+                id="emailConfirm"
+                name="emailConfirm"
+                type="text"
+                required
+                data-fv-equals="#email"
+                data-fv-message-equals="La confirmacion debe coincidir con el email."
+                placeholder="repite el email"
+              />
+              <div class="fv-error" data-fv-message-for="emailConfirm"></div>
+            </div>
+
+            <div class="modal-foot">
+              <button type="button" class="ghost" data-modal="dismiss">Cancelar</button>
+              <button type="submit" class="btn-danger">Confirmar orden</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmSubmit" class="confirm-box" hidden>
+    <section class="confirm-card" role="dialog" aria-modal="true" tabindex="-1">
+      <h3 data-ca-dialog-title>Confirmar accion</h3>
+      <p data-ca-dialog-message></p>
+      <div class="confirm-actions">
+        <button type="button" class="ghost" data-ca-cancel>Volver</button>
+        <button type="button" class="btn-danger" data-ca-confirm>Si, continuar</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="../Modal/modal.min.js"></script>
+  <script src="../FormValidate/formValidate.min.js"></script>
+  <script src="../ConfirmAction/confirmAction.min.js"></script>
+  <script src="../FormRequest/formRequest.min.js"></script>
+  <script src="../RequestState/requestState.min.js"></script>
+  <script src="../NotificationPush/notificationPush.min.js"></script>
+
+  <script>
+    (function () {
+      const logs = document.getElementById('logs')
+          , checkoutForm = document.getElementById('checkoutForm')
+          , modalEl = document.getElementById('flowModal')
+          , requestStateButton = document.getElementById('btnNotify')
+          , requestStatePushTrigger = document.getElementById('requestStatePushTrigger')
+          , simpleForm = document.getElementById('simpleForm')
+          , simpleSubmit = document.getElementById('simpleSubmit')
+          , simpleState = document.getElementById('simpleState');
+
+      function addLog(text) {
+        const item = document.createElement('li');
+        item.textContent = new Date().toLocaleTimeString() + ' - ' + text;
+        logs.prepend(item);
+      }
+
+      modalEl.addEventListener('shown.plugin.modal', function () {
+        addLog('shown.plugin.modal');
+      });
+
+      modalEl.addEventListener('hidden.plugin.modal', function () {
+        addLog('hidden.plugin.modal');
+      });
+
+      checkoutForm.addEventListener('before.plugin.confirmAction', function () {
+        addLog('before.plugin.confirmAction');
+      });
+
+      checkoutForm.addEventListener('confirmed.plugin.confirmAction', function () {
+        addLog('confirmed.plugin.confirmAction');
+      });
+
+      checkoutForm.addEventListener('cancelled.plugin.confirmAction', function () {
+        addLog('cancelled.plugin.confirmAction');
+      });
+
+      checkoutForm.addEventListener('before.plugin.formRequest', function () {
+        addLog('before.plugin.formRequest');
+      });
+
+      checkoutForm.addEventListener('success.plugin.formRequest', function () {
+        addLog('success.plugin.formRequest');
+        const modal = window.Modal.getInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+      });
+
+      checkoutForm.addEventListener('error.plugin.formRequest', function () {
+        addLog('error.plugin.formRequest');
+      });
+
+      checkoutForm.addEventListener('complete.plugin.formRequest', function () {
+        addLog('complete.plugin.formRequest');
+      });
+
+      requestStateButton.addEventListener('success.plugin.requestState', function () {
+        addLog('success.plugin.requestState');
+        if (requestStatePushTrigger instanceof HTMLElement) {
+          requestStatePushTrigger.click();
+        }
+      });
+
+      function syncStateField(trigger, fallbackTargetId, logPrefix) {
+        if (!(trigger instanceof HTMLElement)) return;
+
+        // RequestState emite el estado, aqui solo sincronizamos la etiqueta visual.
+        trigger.addEventListener('state.plugin.requestState', function (evt) {
+          const detail = evt && evt.detail ? evt.detail : null
+              , state = detail && detail.state ? detail.state : 'idle'
+              , target = detail && detail.target instanceof HTMLElement
+                ? detail.target
+                : document.getElementById(fallbackTargetId)
+              , stateField = target ? target.querySelector('[data-rs-field-state]') : null;
+
+          if (stateField) {
+            stateField.textContent = state;
+          }
+
+          addLog(logPrefix + state);
+        });
+      }
+
+      syncStateField(requestStateButton, 'notifyState', 'state.plugin.requestState -> ');
+
+      requestStateButton.addEventListener('error.plugin.requestState', function () {
+        addLog('error.plugin.requestState');
+      });
+
+      if (simpleForm instanceof HTMLFormElement && simpleSubmit instanceof HTMLElement) {
+        const simpleRs = window.RequestState && typeof window.RequestState.getInstance === 'function'
+            ? window.RequestState.getInstance(simpleSubmit)
+            : null;
+
+        syncStateField(simpleSubmit, 'simpleState', 'state.plugin.requestState(simple) -> ');
+
+        if (simpleRs) {
+          // Puente de eventos para usar RequestState solo como capa visual del submit real.
+          const baseContext = {
+            trigger: simpleSubmit,
+            target: simpleState instanceof HTMLElement ? simpleState : simpleSubmit,
+            payload: {}
+          };
+
+          simpleForm.addEventListener('before.plugin.formRequest', function () {
+            addLog('before.plugin.formRequest(simple)');
+            simpleRs.setState('loading', baseContext);
+          });
+
+          simpleForm.addEventListener('success.plugin.formRequest', function (evt) {
+            addLog('success.plugin.formRequest(simple)');
+            simpleRs.setState('success', {
+              ...baseContext,
+              response: evt && evt.detail ? evt.detail.response : null
+            });
+          });
+
+          simpleForm.addEventListener('error.plugin.formRequest', function (evt) {
+            addLog('error.plugin.formRequest(simple)');
+            simpleRs.setState('error', {
+              ...baseContext,
+              error: evt && evt.detail ? evt.detail.error : null
+            });
+          });
+
+          simpleForm.addEventListener('complete.plugin.formRequest', function () {
+            addLog('complete.plugin.formRequest(simple)');
+            window.setTimeout(function () {
+              simpleRs.setState('idle', baseContext);
+            }, 1300);
+          });
+        }
+      }
+
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async function (url, options) {
+        const method = (options && options.method ? options.method : 'GET').toUpperCase();
+        const parsedUrl = new URL(String(url), window.location.href);
+
+        if (method === 'POST' && parsedUrl.pathname === '/api/checkout') {
+          // Mock local del checkout para que el demo funcione sin backend.
+          const body = options && options.body instanceof FormData ? options.body : new FormData();
+          const email = String(body.get('email') || '').trim();
+
+          const html = [
+            '<div>',
+            '  <strong>Orden procesada</strong>',
+            '  <p>Cliente: ' + (email || '(sin email)') + '</p>',
+            '  <p>Estado: OK</p>',
+            '</div>'
+          ].join('');
+
+          return new Response(html, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+          });
+        }
+
+        if (method === 'POST' && parsedUrl.pathname === '/api/profile') {
+          // Mock local del formulario simple (respuesta JSON).
+          const body = options && options.body instanceof FormData ? options.body : new FormData()
+              , name = String(body.get('name') || '').trim()
+              , email = String(body.get('email') || '').trim();
+
+          return new Response(JSON.stringify({
+            ok: true,
+            profile: {
+              name: name,
+              email: email
+            }
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+          });
+        }
+
+        return nativeFetch(url, options);
+      };
+    })();
+  </script>
+</body>
+</html>

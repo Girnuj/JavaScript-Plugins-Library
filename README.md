@@ -14,6 +14,13 @@ Coleccion de plugins JavaScript para manipulacion del DOM organizados por carpet
 Sin dependencias externas!!.
 Estos se inicializan solos al detectar los atributos HTML necesarios, asi que no tienes que preocuparte por escribir JS, tambien puedes optar por la inicializacion manual.
 
+## Requisitos Generales
+
+- JavaScript con sintaxis ECMAScript 2020 (ECMA-2020)
+
+Plugins funcionales en JavaScript nativo.
+ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
+
 ## Plugins Disponibles
 
 - [ChildSelect](ChildSelect/): carga opciones dependientes en un select hijo a partir del valor del select padre.
@@ -33,12 +40,23 @@ Estos se inicializan solos al detectar los atributos HTML necesarios, asi que no
 - [UIState](UIState/): permite previsualizar estados de UI como loading, empty, error o success en componentes para QA y diseno.
 - [VideoUrlPreview](VideoUrlPreview/): previsualiza videos de YouTube en un `<iframe>` a partir de una URL.
 
-## Requisitos Generales
+## Ejemplo De Integracion De Varios Plugins
 
-- JavaScript con sintaxis ECMAScript 2020 (ECMA-2020)
+Si necesitas resolver un flujo completo en una sola vista, puedes combinar varios plugins sin convertirlos en un plugin monolitico.
 
-Plugins funcionales en JavaScript nativo.
-ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
+- Demo integrada: [PluginIntegration/test-plugin-integration.html](PluginIntegration/test-plugin-integration.html)
+- Guia del ejemplo: [PluginIntegration/README.md](PluginIntegration/README.md)
+
+Combinacion recomendada en ese ejemplo:
+
+- `Modal` para contenedor UI del flujo.
+- `FormValidate` para validar campos y bloquear submit con errores.
+- `ConfirmAction` para confirmacion previa de acciones sensibles.
+- `FormRequest` como owner del request real.
+- `RequestState` para estados visuales (`loading/success/error/idle`).
+- `NotificationPush` para feedback inmediato al usuario.
+
+Regla clave: si combinas plugins de red, define un solo owner del request real y usa eventos custom (`before/success/error/complete`) para puentes entre plugins.
 
 ## Versiones Minificadas
 
@@ -158,20 +176,3 @@ En cada carpeta de plugin:
 
 Mantener una biblioteca de plugins simple, reutilizable y bien documentada para que cualquier persona pueda integrarlos rapido en sus proyectos copiando solamente el JS(pluginName.js) o su version .min e incorporandolos en sus proyectos o vistas necesarias de una forma muy simple y liviana.
 
-## Como Contribuir
-
-Si quieres contribuir con mejoras o un nuevo plugin:
-
-1. Crea (o actualiza) la carpeta del plugin siguiendo la estructura del repositorio.
-2. Implementa el archivo fuente (`plugin.js`) manteniendo inicializacion por `data-*` y API publica cuando aplique.
-3. Agrega/actualiza documentacion en `README.md` y `README.en.md` del plugin.
-4. Incluye un HTML de prueba (`test-pluginName.html`) con ejemplos reales de uso.
-5. Genera la version minificada (`plugin.min.js`) antes de publicar cambios.
-6. Verifica que no haya errores y que los ejemplos funcionen en navegador.
-7. Actualiza `README.md` y `README.en.md` raiz para listar el plugin (o documentar el cambio).
-
-Buenas practicas sugeridas:
-
-- Mantener compatibilidad con ECMAScript 2020.
-- Evitar dependencias externas innecesarias.
-- No romper API publica existente sin documentar claramente el cambio.

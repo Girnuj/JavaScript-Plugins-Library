@@ -14,6 +14,13 @@ A collection of JavaScript plugins for DOM manipulation, organized by folder.
 No external dependencies.
 These are automatically initialized when they detect the necessary HTML attributes, so you don't have to worry about writing JS; you can also opt for manual initialization.
 
+## General Requirements
+
+- JavaScript using ECMAScript 2020 (ECMA-2020) syntax
+
+Functional plugins in native JavaScript.
+ECMAScript 2020 is supported by most modern browsers.
+
 ## Available Plugins
 
 - [ChildSelect](ChildSelect/): loads dependent options into a child select based on parent select value.
@@ -33,12 +40,23 @@ These are automatically initialized when they detect the necessary HTML attribut
 - [UIState](UIState/): lets teams preview UI states like loading, empty, error, or success for QA and design workflows.
 - [VideoUrlPreview](VideoUrlPreview/): previews YouTube videos in an `<iframe>` from a URL.
 
-## General Requirements
+## Multi-Plugin Integration Example
 
-- JavaScript using ECMAScript 2020 (ECMA-2020) syntax
+If you need to solve a complete flow in a single view, you can combine multiple plugins without turning them into a monolithic plugin.
 
-Functional plugins in native JavaScript.
-ECMAScript 2020 is supported by most modern browsers.
+- Integrated demo: [PluginIntegration/test-plugin-integration.html](PluginIntegration/test-plugin-integration.html)
+- Example guide: [PluginIntegration/README.md](PluginIntegration/README.md)
+
+Recommended composition in that example:
+
+- `Modal` as the UI flow container.
+- `FormValidate` to validate fields and block submit on validation errors.
+- `ConfirmAction` for pre-confirmation of sensitive actions.
+- `FormRequest` as the real request owner.
+- `RequestState` for visual lifecycle states (`loading/success/error/idle`).
+- `NotificationPush` for immediate user feedback.
+
+Key rule: when combining network-related plugins, keep a single real request owner and use custom lifecycle events (`before/success/error/complete`) as bridges between plugins.
 
 ## Minified Versions
 
