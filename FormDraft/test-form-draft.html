@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FormDraft Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input, select, textarea {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: #0f766e;
+      cursor: pointer;
+    }
+
+    .ghost {
+      background: #334155;
+    }
+
+    .box {
+      border: 1px dashed #93a4bc;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fafc;
+      font-size: 14px;
+      color: #334155;
+      white-space: pre-wrap;
+    }
+
+    .logs {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .logs li {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    @media (max-width: 760px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-pp-observe-root-form-draft data-pp-observe-root-form-request>
+  <main class="wrap">
+    <section class="panel">
+      <h1>FormDraft + FormRequest</h1>
+      <p>Completa campos, recarga la pagina y veras restauracion automatica del borrador.</p>
+    </section>
+
+    <section class="panel">
+      <form
+        id="onboardingForm"
+        data-form-draft
+        data-form-request
+        data-fd-storage="local"
+        data-fd-key="demo-onboarding-v1"
+        data-fd-debounce="300"
+        data-fd-clear-on-form-request-success="true"
+        data-form-reset-on-success="true"
+        data-form-response="json"
+        data-form-target="#serverResult"
+        action="/api/onboarding"
+        method="post"
+      >
+        <div class="grid">
+          <label>
+            Nombre
+            <input type="text" name="name" placeholder="Tu nombre" />
+          </label>
+
+          <label>
+            Empresa
+            <input type="text" name="company" placeholder="Tu empresa" />
+          </label>
+
+          <label>
+            Plan
+            <select name="plan">
+              <option value="">Selecciona...</option>
+              <option value="starter">Starter</option>
+              <option value="growth">Growth</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </label>
+
+          <label>
+            Boletin
+            <input type="checkbox" name="newsletter" />
+          </label>
+        </div>
+
+        <label>
+          Notas
+          <textarea name="notes" placeholder="Describe tu caso de uso"></textarea>
+        </label>
+
+        <div class="row">
+          <button type="submit">Enviar (limpia borrador e inputs al exito)</button>
+          <button type="button" class="ghost" id="btnClearDraft">Limpiar borrador manual</button>
+        </div>
+      </form>
+
+      <div id="serverResult" class="box">Sin respuesta aun.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos</h2>
+      <ul id="logs" class="logs"></ul>
+    </section>
+  </main>
+
+  <script src="./formDraft.js"></script>
+  <script src="../FormRequest/formRequest.min.js"></script>
+
+  <script>
+    (function () {
+      const form = document.getElementById('onboardingForm')
+          , logs = document.getElementById('logs')
+          , clearButton = document.getElementById('btnClearDraft');
+
+      function addLog(line) {
+        const item = document.createElement('li');
+        item.textContent = new Date().toLocaleTimeString() + ' - ' + line;
+        logs.prepend(item);
+      }
+
+      form.addEventListener('saved.plugin.formDraft', function () {
+        addLog('saved.plugin.formDraft');
+      });
+
+      form.addEventListener('restored.plugin.formDraft', function () {
+        addLog('restored.plugin.formDraft');
+      });
+
+      form.addEventListener('cleared.plugin.formDraft', function () {
+        addLog('cleared.plugin.formDraft');
+      });
+
+      form.addEventListener('success.plugin.formRequest', function () {
+        addLog('success.plugin.formRequest');
+      });
+
+      clearButton.addEventListener('click', function () {
+        const instance = window.FormDraft.getInstance(form);
+        if (instance) {
+          instance.clearDraft();
+        }
+      });
+
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async function (url, options) {
+        const method = (options && options.method ? options.method : 'GET').toUpperCase();
+        const parsedUrl = new URL(String(url), window.location.href);
+
+        if (method === 'POST' && parsedUrl.pathname === '/api/onboarding') {
+          const body = options && options.body instanceof FormData ? options.body : new FormData();
+
+          return new Response(JSON.stringify({
+            ok: true,
+            received: {
+              name: String(body.get('name') || ''),
+              company: String(body.get('company') || ''),
+              plan: String(body.get('plan') || ''),
+              newsletter: body.get('newsletter') != null,
+              notes: String(body.get('notes') || '')
+            }
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+          });
+        }
+
+        return nativeFetch(url, options);
+      };
+    })();
+  </script>
+</body>
+</html>

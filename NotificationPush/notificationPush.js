@@ -505,7 +505,7 @@
          */
         bind() {
             if (this.isBound) return;
-            this.subject.addEventListener('click', this.handleClick);
+            this.applyListeners('addEventListener');
             this.isBound = true;
         }
 
@@ -515,8 +515,29 @@
          */
         unbind() {
             if (!this.isBound) return;
-            this.subject.removeEventListener('click', this.handleClick);
+            this.applyListeners('removeEventListener');
             this.isBound = false;
+        }
+
+        /**
+         * Define listeners activos de la instancia.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
+        getListeners() {
+            return [
+                ['click', this.handleClick],
+            ];
+        }
+
+        /**
+         * Aplica add/remove de listeners en lote.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
+        applyListeners(method) {
+            this.getListeners().forEach(([eventName, handler, useCapture]) => {
+                this.subject[method](eventName, handler, useCapture);
+            });
         }
 
         /**

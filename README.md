@@ -25,6 +25,7 @@ ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 
 - [ChildSelect](ChildSelect/): carga opciones dependientes en un select hijo a partir del valor del select padre.
 - [ConfirmAction](ConfirmAction/): solicita confirmacion antes de acciones sensibles o destructivas en botones, links y formularios.
+- [FormDraft](FormDraft/): guarda y restaura borradores de formularios en `localStorage`/`sessionStorage`, ideal para flujos largos.
 - [FormRequest](FormRequest/): extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
 - [FormValidate](FormValidate/): agrega validaciones extendidas por `data-*` para reglas de negocio y bloquea envio cuando no se cumplen.
 - [ImgUploadPreview](ImgUploadPreview/): previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
@@ -52,6 +53,7 @@ Combinacion recomendada en ese ejemplo:
 - `Modal` para contenedor UI del flujo.
 - `FormValidate` para validar campos y bloquear submit con errores.
 - `ConfirmAction` para confirmacion previa de acciones sensibles.
+- `FormDraft` para persistir progreso del usuario en formularios largos.
 - `FormRequest` como owner del request real.
 - `RequestState` para estados visuales (`loading/success/error/idle`).
 - `NotificationPush` para feedback inmediato al usuario.
@@ -117,6 +119,7 @@ Regla de prioridad: root directo por plugin > root por selector en `<html>` > `d
 - `ModalSteps`: `data-pp-observe-root-modal-steps`
 - `FormRequest`: `data-pp-observe-root-form-request`
 - `FormValidate`: `data-pp-observe-root-form-validate`
+- `FormDraft`: `data-pp-observe-root-form-draft`
 - `RequestState`: `data-pp-observe-root-request-state`
 - `NotificationPush`: `data-pp-observe-root-notification-push`
 - `UIState`: `data-pp-observe-root-ui-state`

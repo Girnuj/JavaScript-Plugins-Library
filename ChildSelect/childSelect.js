@@ -430,10 +430,45 @@
 		 * @returns {void}
 		 */
 		bind() {
-			if (this.isBound || !this.target) return;
-			this.subject.addEventListener('change', this.handleParentChange);
-			this.target.addEventListener('change', this.handleChildChange);
+			if (this.isBound) return;
+			this.applyListeners('addEventListener');
 			this.isBound = true;
+		}
+
+		/**
+		 * Elimina listeners registrados para la instancia.
+		 * @returns {void}
+		 */
+		unbind() {
+			if (!this.isBound) return;
+			this.applyListeners('removeEventListener');
+			this.isBound = false;
+		}
+
+		/**
+		 * Construye la lista de listeners del plugin.
+		 * @returns {Array<[string, Function]>}
+		 */
+		getListeners() {
+			return [
+				['change', this.handleParentChange],
+				[this.target ? 'change' : '', this.handleChildChange]
+			].filter(([eventName]) => Boolean(eventName));
+		}
+
+		/**
+		 * Aplica addEventListener/removeEventListener en lote.
+		 * @param {'addEventListener'|'removeEventListener'} method - Metodo del EventTarget a ejecutar.
+		 * @returns {void}
+		 */
+		applyListeners(method) {
+			this.getListeners().forEach(([eventName, handler]) => {
+				if (handler === this.handleChildChange) {
+					this.target && this.target[method](eventName, handler);
+					return;
+				}
+				this.subject[method](eventName, handler);
+			});
 		}
 
 		/**
@@ -441,12 +476,7 @@
 		 * @returns {void}
 		 */
 		destroy() {
-			if (!this.isBound) return;
-			this.subject.removeEventListener('change', this.handleParentChange);
-			if (this.target) {
-				this.target.removeEventListener('change', this.handleChildChange);
-			}
-			this.isBound = false;
+			this.unbind();
 			INSTANCES.delete(this.subject);
 		}
 

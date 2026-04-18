@@ -108,10 +108,39 @@
 		 */
 		bind() {
 			if (this.isBound) return;
-			this.subject.addEventListener('input', this.handleInput);
-			this.subject.addEventListener('change', this.handleChange);
+			this.applyListeners('addEventListener');
 			this.isBound = true;
 			this.updatePreview(this.subject.value, true);
+		}
+
+		/**
+		 * Desvincula los eventos del input.
+		 */
+		unbind() {
+			if (!this.isBound) return;
+			this.applyListeners('removeEventListener');
+			this.isBound = false;
+		}
+
+		/**
+		 * Devuelve la lista de listeners del plugin.
+		 * @returns {Array<[string, Function]>}
+		 */
+		getListeners() {
+			return [
+				['input', this.handleInput],
+				['change', this.handleChange]
+			];
+		}
+
+		/**
+		 * Aplica addEventListener/removeEventListener en lote.
+		 * @param {'addEventListener'|'removeEventListener'} method - Metodo del EventTarget a ejecutar.
+		 */
+		applyListeners(method) {
+			this.getListeners().forEach(([eventName, handler]) => {
+				this.subject[method](eventName, handler);
+			});
 		}
 
 		/**
@@ -123,9 +152,7 @@
 			if (!this.isBound) return;
 			const { clearPreview = false } = options;
 
-			this.subject.removeEventListener('input', this.handleInput);
-			this.subject.removeEventListener('change', this.handleChange);
-			this.isBound = false;
+			this.unbind();
 			INSTANCES.delete(this.subject);
 
 			if (clearPreview) {

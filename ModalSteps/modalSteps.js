@@ -536,10 +536,7 @@
 
             if (this.isBound) return;
 
-            this.subject.addEventListener(EVENT_HIDDEN_NATIVE, this.handleHidden);
-            this.subject.addEventListener('close', this.handleHidden);
-            this.subject.addEventListener(EVENT_SHOWN_NATIVE, this.handleShown);
-            this.subject.addEventListener('submit', this.handleSubmit);
+            this.applyListeners('addEventListener');
             this.isBound = true;
         }
 
@@ -549,11 +546,33 @@
          */
         unbind() {
             if (!this.isBound) return;
-            this.subject.removeEventListener(EVENT_HIDDEN_NATIVE, this.handleHidden);
-            this.subject.removeEventListener('close', this.handleHidden);
-            this.subject.removeEventListener(EVENT_SHOWN_NATIVE, this.handleShown);
-            this.subject.removeEventListener('submit', this.handleSubmit);
+
+            this.applyListeners('removeEventListener');
             this.isBound = false;
+        }
+
+        /**
+         * Define listeners activos de la instancia.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
+        getListeners() {
+            return [
+                [EVENT_HIDDEN_NATIVE, this.handleHidden],
+                ['close', this.handleHidden],
+                [EVENT_SHOWN_NATIVE, this.handleShown],
+                ['submit', this.handleSubmit],
+            ];
+        }
+
+        /**
+         * Aplica add/remove de listeners en lote.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
+        applyListeners(method) {
+            this.getListeners().forEach(([eventName, handler, useCapture]) => {
+                this.subject[method](eventName, handler, useCapture);
+            });
         }
 
         /**

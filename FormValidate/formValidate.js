@@ -898,10 +898,7 @@
         bind() {
             if (this.isBound) return;
 
-            this.subject.addEventListener('submit', this.handleSubmitCapture, true);
-            this.subject.addEventListener('before.plugin.formRequest', this.handleBeforeFormRequest);
-            this.subject.addEventListener('input', this.handleInput, true);
-            this.subject.addEventListener('blur', this.handleBlur, true);
+            this.applyListeners('addEventListener');
             this.isBound = true;
         }
 
@@ -912,11 +909,32 @@
         unbind() {
             if (!this.isBound) return;
 
-            this.subject.removeEventListener('submit', this.handleSubmitCapture, true);
-            this.subject.removeEventListener('before.plugin.formRequest', this.handleBeforeFormRequest);
-            this.subject.removeEventListener('input', this.handleInput, true);
-            this.subject.removeEventListener('blur', this.handleBlur, true);
+            this.applyListeners('removeEventListener');
             this.isBound = false;
+        }
+
+        /**
+         * Define listeners activos de la instancia.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
+        getListeners() {
+            return [
+                ['submit', this.handleSubmitCapture, true],
+                ['before.plugin.formRequest', this.handleBeforeFormRequest],
+                ['input', this.handleInput, true],
+                ['blur', this.handleBlur, true],
+            ];
+        }
+
+        /**
+         * Aplica add/remove de listeners en lote.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
+        applyListeners(method) {
+            this.getListeners().forEach(([eventName, handler, useCapture]) => {
+                this.subject[method](eventName, handler, useCapture);
+            });
         }
 
         /**

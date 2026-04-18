@@ -808,11 +808,7 @@
         bind() {
             if (this.isBound) return;
 
-            if (this.isFormSubject) {
-                this.subject.addEventListener('submit', this.handleSubmit);
-            } else {
-                this.subject.addEventListener('click', this.run);
-            }
+            this.applyListeners('addEventListener');
 
             this.isBound = true;
             this.subject.setAttribute('data-rs-state', STATE_IDLE);
@@ -835,11 +831,7 @@
         unbind() {
             if (!this.isBound) return;
 
-            if (this.isFormSubject) {
-                this.subject.removeEventListener('submit', this.handleSubmit);
-            } else {
-                this.subject.removeEventListener('click', this.run);
-            }
+            this.applyListeners('removeEventListener');
 
             if (this.abortController) {
                 this.abortController.abort();
@@ -849,6 +841,29 @@
                 this.resetTimer = null;
             }
             this.isBound = false;
+        }
+
+        /**
+         * Define listeners activos de la instancia segun el tipo de subject.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
+        getListeners() {
+            if (this.isFormSubject) {
+                return [['submit', this.handleSubmit]];
+            }
+
+            return [['click', this.run]];
+        }
+
+        /**
+         * Aplica add/remove de listeners en lote.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
+        applyListeners(method) {
+            this.getListeners().forEach(([eventName, handler, useCapture]) => {
+                this.subject[method](eventName, handler, useCapture);
+            });
         }
 
         /**

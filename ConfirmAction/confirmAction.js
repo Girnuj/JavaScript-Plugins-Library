@@ -395,39 +395,33 @@
                 }
             }
 
-            if (titleTarget) {
-                titleTarget.textContent = detail.title || 'Confirmar accion';
-            }
-
-            if (messageTarget) {
-                messageTarget.textContent = detail.content;
-            }
+            titleTarget && (titleTarget.textContent = detail.title || 'Confirmar accion');
+            messageTarget && (messageTarget.textContent = detail.content);
 
             return new Promise((resolve) => {
                 let isDone = false;
                 let isProcessing = false;
                 const wasHidden = dialog.hasAttribute('hidden')
                     , isNativeDialog = dialog instanceof HTMLDialogElement;
+                const listeners = [];
 
                 const allowEscape = this.options.allowEscape !== false
                     , allowOutsideClick = this.options.allowOutsideClick !== false;
 
+                const addManagedListener = (target, eventName, handler, options) => {
+                    target.addEventListener(eventName, handler, options);
+                    listeners.push([target, eventName, handler, options]);
+                };
+
                 const cleanup = () => {
-                    confirmButton.removeEventListener('click', onConfirm);
-                    cancelButton.removeEventListener('click', onCancel);
-                    if (denyButton instanceof HTMLElement) {
-                        denyButton.removeEventListener('click', onDeny);
-                    }
+                    listeners.forEach(([target, eventName, handler, options]) => {
+                        target.removeEventListener(eventName, handler, options);
+                    });
+                    listeners.length = 0;
 
                     if (isNativeDialog) {
-                        dialog.removeEventListener('cancel', onDialogCancel);
-                        dialog.removeEventListener('close', onDialogClose);
-                        if (dialog.open) {
-                            dialog.close();
-                        }
+                        dialog.open && dialog.close();
                     } else {
-                        dialog.removeEventListener('keydown', onKeyDown);
-                        dialog.removeEventListener('click', onOutsideClick);
                         dialog.classList.remove('is-open');
                         if (wasHidden) {
                             dialog.setAttribute('hidden', '');
@@ -459,51 +453,41 @@
                     , onDeny = () => done('deny')
                     , onDialogCancel = (evt) => {
                         evt.preventDefault();
-                        if (allowEscape) {
-                            done(false);
-                        }
+                        allowEscape && done(false);
                     }
                     , onDialogClose = () => {
                         done(false);
                     }
                     , onKeyDown = (evt) => {
-                        if (evt.key === 'Escape') {
-                            evt.preventDefault();
-                            if (allowEscape) {
-                                done(false);
-                            }
-                        }
+                        if (evt.key !== 'Escape') return;
+                        evt.preventDefault();
+                        allowEscape && done(false);
                     }
                     , onOutsideClick = (evt) => {
-                        if (!allowOutsideClick) return;
-                        if (evt.target === dialog) {
+                        if (allowOutsideClick && evt.target === dialog) {
                             done(false);
                         }
                     };
 
-                confirmButton.addEventListener('click', onConfirm);
-                cancelButton.addEventListener('click', onCancel);
+                addManagedListener(confirmButton, 'click', onConfirm);
+                addManagedListener(cancelButton, 'click', onCancel);
                 if (denyButton instanceof HTMLElement && denyText) {
-                    denyButton.addEventListener('click', onDeny);
+                    addManagedListener(denyButton, 'click', onDeny);
                 }
 
                 if (isNativeDialog) {
-                    dialog.addEventListener('cancel', onDialogCancel);
-                    dialog.addEventListener('close', onDialogClose);
+                    addManagedListener(dialog, 'cancel', onDialogCancel);
+                    addManagedListener(dialog, 'close', onDialogClose);
                     if (!dialog.open) {
                         dialog.showModal();
                     }
-                    if (this.options.focusConfirm !== false) {
-                        confirmButton.focus();
-                    }
+                    this.options.focusConfirm !== false && confirmButton.focus();
                 } else {
                     dialog.removeAttribute('hidden');
                     dialog.classList.add('is-open');
-                    dialog.addEventListener('keydown', onKeyDown);
-                    dialog.addEventListener('click', onOutsideClick);
-                    if (this.options.focusConfirm !== false) {
-                        confirmButton.focus();
-                    }
+                    addManagedListener(dialog, 'keydown', onKeyDown);
+                    addManagedListener(dialog, 'click', onOutsideClick);
+                    this.options.focusConfirm !== false && confirmButton.focus();
                 }
             });
         }
@@ -611,11 +595,7 @@
             this.skipNextSubmit = true;
 
             if (typeof this.subject.requestSubmit === 'function') {
-                if (submitter) {
-                    this.subject.requestSubmit(submitter);
-                } else {
-                    this.subject.requestSubmit();
-                }
+                this.subject.requestSubmit(submitter || undefined);
                 return;
             }
 
@@ -629,11 +609,7 @@
         bind() {
             if (this.isBound) return;
 
-            if (this.subject instanceof HTMLFormElement) {
-                this.subject.addEventListener('submit', this.handleSubmitCapture, true);
-            } else {
-                this.subject.addEventListener('click', this.handleClick);
-            }
+            this.applyListeners('addEventListener');
 
             this.isBound = true;
         }
@@ -645,13 +621,32 @@
         unbind() {
             if (!this.isBound) return;
 
-            if (this.subject instanceof HTMLFormElement) {
-                this.subject.removeEventListener('submit', this.handleSubmitCapture, true);
-            } else {
-                this.subject.removeEventListener('click', this.handleClick);
-            }
+            this.applyListeners('removeEventListener');
 
             this.isBound = false;
+        }
+
+        /**
+         * Define listeners activos de la instancia segun tipo de subject.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
+        getListeners() {
+            if (this.subject instanceof HTMLFormElement) {
+                return [['submit', this.handleSubmitCapture, true]];
+            }
+
+            return [['click', this.handleClick]];
+        }
+
+        /**
+         * Aplica add/remove de listeners en lote.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
+        applyListeners(method) {
+            this.getListeners().forEach(([eventName, handler, useCapture]) => {
+                this.subject[method](eventName, handler, useCapture);
+            });
         }
 
         /**
