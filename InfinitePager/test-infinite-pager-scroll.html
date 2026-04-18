@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InfinitePager Scroll Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f5f7fb;
+      color: #0f172a;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .feed {
+      display: grid;
+      gap: 10px;
+    }
+
+    .post {
+      border: 1px solid #dbe4ef;
+      border-radius: 10px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .post small {
+      color: #64748b;
+    }
+
+    #scrollTrigger {
+      display: none;
+    }
+
+    #logs {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    #logs li {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+    }
+  </style>
+</head>
+<body data-pp-observe-root-infinite-pager>
+  <main class="wrap">
+    <section class="panel">
+      <h1>InfinitePager (scroll mode)</h1>
+      <p>Desplaza hacia abajo y el plugin cargara mas resultados automaticamente.</p>
+    </section>
+
+    <section class="panel">
+      <div id="feedList" class="feed"></div>
+
+      <button
+        id="scrollTrigger"
+        data-role="infinite-pager"
+        data-pager-endpoint="/api/demo/feed"
+        data-pager-target="#feedList"
+        data-pager-mode="scroll"
+        data-pager-page-size="6"
+        data-pager-auto-load="true"
+        data-pager-response-mode="json"
+        data-pager-html-path="html"
+        data-pager-has-more-path="hasMore"
+        data-pager-next-page-path="nextPage"
+        data-pager-root-margin="600px 0px"
+      >
+        trigger oculto
+      </button>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos</h2>
+      <ul id="logs"></ul>
+    </section>
+  </main>
+
+  <script src="./infinitePager.js"></script>
+  <script>
+    (function () {
+      const logs = document.getElementById('logs')
+        , trigger = document.getElementById('scrollTrigger');
+
+      function log(line) {
+        const item = document.createElement('li');
+        item.textContent = new Date().toLocaleTimeString() + ' - ' + line;
+        logs.prepend(item);
+      }
+
+      trigger.addEventListener('success.plugin.infinitePager', function (evt) {
+        log('success: page=' + evt.detail.page + ', added=' + evt.detail.appendedCount);
+      });
+
+      trigger.addEventListener('end.plugin.infinitePager', function () {
+        log('end: feed completo');
+      });
+
+      trigger.addEventListener('error.plugin.infinitePager', function (evt) {
+        log('error: ' + (evt.detail.error && evt.detail.error.message ? evt.detail.error.message : 'unknown'));
+      });
+
+      const sourceItems = Array.from({ length: 27 }, function (_, index) {
+        const id = index + 1;
+        return {
+          id: id,
+          title: 'Post #' + id,
+          text: 'Contenido resumido del post numero ' + id + '.'
+        };
+      });
+
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = async function (url, options) {
+        const requestUrl = new URL(String(url), window.location.href)
+          , method = (options && options.method ? options.method : 'GET').toUpperCase();
+
+        if (requestUrl.pathname === '/api/demo/feed' && method === 'GET') {
+          const page = Math.max(1, Number(requestUrl.searchParams.get('page') || 1))
+            , pageSize = Math.max(1, Number(requestUrl.searchParams.get('pageSize') || 6))
+            , start = (page - 1) * pageSize
+            , pageItems = sourceItems.slice(start, start + pageSize)
+            , html = pageItems.map(function (item) {
+                return '<article class="post">'
+                  + '<strong>' + item.title + '</strong>'
+                  + '<p>' + item.text + '</p>'
+                  + '<small>ID: ' + item.id + '</small>'
+                  + '</article>';
+              }).join('')
+            , hasMore = (start + pageItems.length) < sourceItems.length
+            , body = {
+                html: html,
+                hasMore: hasMore,
+                nextPage: hasMore ? page + 1 : page
+              };
+
+          return new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+          });
+        }
+
+        return originalFetch(url, options);
+      };
+    })();
+  </script>
+</body>
+</html>

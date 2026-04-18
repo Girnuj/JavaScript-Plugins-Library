@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InfinitePager Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f5f7fb;
+      color: #0f172a;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .products {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    .card {
+      border: 1px solid #dbe4ef;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .price {
+      color: #0f766e;
+      font-weight: 700;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: #0f766e;
+      cursor: pointer;
+    }
+
+    button.is-loading,
+    button.is-disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    #logs {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    #logs li {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+    }
+  </style>
+</head>
+<body data-pp-observe-root-infinite-pager>
+  <main class="wrap">
+    <section class="panel">
+      <h1>InfinitePager (button mode)</h1>
+      <p>Click en "Ver mas" para cargar nuevas tarjetas.</p>
+    </section>
+
+    <section class="panel">
+      <div id="productsList" class="products"></div>
+
+      <div style="margin-top: 12px; display: flex; gap: 8px;">
+        <button
+          id="btnLoadMore"
+          data-role="infinite-pager"
+          data-pager-endpoint="/api/demo/products"
+          data-pager-target="#productsList"
+          data-pager-mode="button"
+          data-pager-page-size="8"
+          data-pager-response-mode="json"
+          data-pager-html-path="html"
+          data-pager-has-more-path="hasMore"
+          data-pager-next-page-path="nextPage"
+        >
+          Ver mas
+        </button>
+
+        <button id="btnReset" style="background:#334155;">Reset</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Eventos</h2>
+      <ul id="logs"></ul>
+    </section>
+  </main>
+
+  <script src="./infinitePager.js"></script>
+  <script>
+    (function () {
+      const logs = document.getElementById('logs')
+        , trigger = document.getElementById('btnLoadMore')
+        , resetButton = document.getElementById('btnReset');
+
+      function log(line) {
+        const item = document.createElement('li');
+        item.textContent = new Date().toLocaleTimeString() + ' - ' + line;
+        logs.prepend(item);
+      }
+
+      trigger.addEventListener('success.plugin.infinitePager', function (evt) {
+        log('success: page=' + evt.detail.page + ', added=' + evt.detail.appendedCount);
+      });
+
+      trigger.addEventListener('end.plugin.infinitePager', function () {
+        log('end: no hay mas paginas');
+      });
+
+      trigger.addEventListener('error.plugin.infinitePager', function (evt) {
+        log('error: ' + (evt.detail.error && evt.detail.error.message ? evt.detail.error.message : 'unknown'));
+      });
+
+      resetButton.addEventListener('click', function () {
+        const instance = window.InfinitePager.getInstance(trigger);
+        if (!instance) return;
+        instance.reset({ clearTarget: true });
+        log('reset');
+      });
+
+      const sourceItems = Array.from({ length: 34 }, function (_, index) {
+        const id = index + 1;
+        return {
+          id: id,
+          title: 'Producto ' + id,
+          price: '$' + (500 + id * 17),
+          description: 'Descripcion breve del item #' + id
+        };
+      });
+
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = async function (url, options) {
+        const requestUrl = new URL(String(url), window.location.href)
+          , method = (options && options.method ? options.method : 'GET').toUpperCase();
+
+        if (requestUrl.pathname === '/api/demo/products' && method === 'GET') {
+          const page = Math.max(1, Number(requestUrl.searchParams.get('page') || 1))
+            , pageSize = Math.max(1, Number(requestUrl.searchParams.get('pageSize') || 8))
+            , start = (page - 1) * pageSize
+            , pageItems = sourceItems.slice(start, start + pageSize)
+            , html = pageItems.map(function (item) {
+                return '<article class="card">'
+                  + '<strong>' + item.title + '</strong>'
+                  + '<span class="price">' + item.price + '</span>'
+                  + '<small>' + item.description + '</small>'
+                  + '</article>';
+              }).join('')
+            , hasMore = (start + pageItems.length) < sourceItems.length
+            , body = {
+                html: html,
+                hasMore: hasMore,
+                nextPage: hasMore ? page + 1 : page
+              };
+
+          return new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+          });
+        }
+
+        return originalFetch(url, options);
+      };
+    })();
+  </script>
+</body>
+</html>

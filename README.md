@@ -29,6 +29,7 @@ ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 - [FormRequest](FormRequest/): extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
 - [FormValidate](FormValidate/): agrega validaciones extendidas por `data-*` para reglas de negocio y bloquea envio cuando no se cumplen.
 - [ImgUploadPreview](ImgUploadPreview/): previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
+- [InfinitePager](InfinitePager/): resuelve paginacion incremental con "ver mas" o infinite scroll usando `fetch`.
 - [InputSwitchFriendly](InputSwitchFriendly/): muestra etiquetas amigables segun el estado de un switch/checkbox.
 - [ItemMover](ItemMover/): mueve elementos de una lista hacia arriba o hacia abajo usando triggers con atributos `data-*`.
 - [ItemRemover](ItemRemover/): elimina elementos contenedores desde un trigger de borrado.
@@ -126,6 +127,7 @@ Regla de prioridad: root directo por plugin > root por selector en `<html>` > `d
 - `ChildSelect`: `data-pp-observe-root-child-select`
 - `ConfirmAction`: `data-pp-observe-root-confirm-action`
 - `ImgUploadPreview`: `data-pp-observe-root-img-upload-preview`
+- `InfinitePager`: `data-pp-observe-root-infinite-pager`
 - `VideoUrlPreview`: `data-pp-observe-root-video-url-preview`
 - `ItemMover`: `data-pp-observe-root-item-mover`
 - `ItemRemover`: `data-pp-observe-root-item-remover`
