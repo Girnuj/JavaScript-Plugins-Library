@@ -47,6 +47,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Normaliza el backend de almacenamiento permitido por el plugin.
+     *
+     * @param {string|undefined|null} value Valor crudo (`local` o `session`).
+     * @returns {'local'|'session'} Nombre de storage seguro.
+     */
     const normalizeStorageName = (value) => {
         const normalized = String(value || '').trim().toLowerCase();
         return normalized === 'session' ? 'session' : 'local';
@@ -67,6 +73,12 @@
         return field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement;
     };
 
+    /**
+     * Indica si un input debe omitirse del ciclo de guardado/restauracion.
+     *
+     * @param {Element} field Campo a evaluar.
+     * @returns {boolean} `true` para tipos no persistibles (submit, button, reset, image).
+     */
     const isSkippableType = (field) => {
         if (!(field instanceof HTMLInputElement)) return false;
         const type = String(field.type || '').toLowerCase();
@@ -101,6 +113,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Lee opciones declarativas (`data-fd-*`) desde el formulario.
+     *
+     * @param {HTMLFormElement} element Formulario sujeto.
+     * @returns {Object} Opciones parciales para inicializar la instancia.
+     */
     const getOptionsFromData = (element) => {
         const options = {}
             , saveOnInput = parseBoolean(element.dataset.fdSaveOnInput)
@@ -126,12 +144,12 @@
         element.dataset.fdDebounce !== undefined && (options.debounceMs = Math.max(0, parseNumber(element.dataset.fdDebounce, FORM_DRAFT_DEFAULTS.debounceMs)));
         element.dataset.fdMaxAge !== undefined && (options.maxAgeMs = Math.max(0, parseNumber(element.dataset.fdMaxAge, FORM_DRAFT_DEFAULTS.maxAgeMs)));
 
-        if (saveOnInput !== undefined) options.saveOnInput = saveOnInput;
-        if (saveOnChange !== undefined) options.saveOnChange = saveOnChange;
-        if (saveOnBlur !== undefined) options.saveOnBlur = saveOnBlur;
-        if (restoreOnInit !== undefined) options.restoreOnInit = restoreOnInit;
-        if (clearOnSubmit !== undefined) options.clearOnSubmit = clearOnSubmit;
-        if (clearOnFormRequestSuccess !== undefined) options.clearOnFormRequestSuccess = clearOnFormRequestSuccess;
+        saveOnInput !== undefined && (options.saveOnInput = saveOnInput);
+        saveOnChange !== undefined && (options.saveOnChange = saveOnChange);
+        saveOnBlur !== undefined && (options.saveOnBlur = saveOnBlur);
+        restoreOnInit !== undefined && (options.restoreOnInit = restoreOnInit);
+        clearOnSubmit !== undefined && (options.clearOnSubmit = clearOnSubmit);
+        clearOnFormRequestSuccess !== undefined && (options.clearOnFormRequestSuccess = clearOnFormRequestSuccess);
 
         return options;
     };
@@ -148,6 +166,7 @@
     };
 
     /**
+     * Opciones publicas para controlar guardado, restauracion y limpieza de borradores.
      * @typedef {Object} FormDraftOptions
      * @property {'local'|'session'} [storage='local'] Motor de persistencia para borradores.
      * @property {string} [keyPrefix='formDraft'] Prefijo usado al generar la clave automaticamente.
@@ -177,9 +196,16 @@
      * - Restaurar valores en una visita posterior.
      * - Limpiar borrador por submit o por exito de FormRequest.
      * - Exponer eventos y API publica para integracion manual.
+     *
+     * @fires before.plugin.formDraft
+     * @fires saved.plugin.formDraft
+     * @fires restored.plugin.formDraft
+     * @fires cleared.plugin.formDraft
+     * @fires error.plugin.formDraft
      */
     class FormDraft {
         /**
+         * Crea una instancia para persistir estado del formulario en storage.
          * @param {HTMLFormElement} element Formulario que sera observado.
          * @param {FormDraftOptions} options Opciones de configuracion de la instancia.
          */
@@ -649,7 +675,7 @@
         /**
          * Crea o reutiliza una instancia para un formulario.
          * @param {HTMLFormElement} element Formulario objetivo.
-         * @param {FormDraftOptions} [options={}] Opciones de inicializacion.
+         * @param {FormDraftOptions} [options={}] Opciones de configuración de la instancia.
          * @returns {FormDraft}
          */
         static init(element, options = {}) {
@@ -716,15 +742,18 @@
 
     window.FormDraft = FormDraft;
 
+    /**
+     * Inicializa automaticamente las instancias y activa observacion de cambios en el DOM.
+     *
+     * @returns {void}
+     */
     const bootstrap = () => {
         FormDraft.initAll(document);
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
-    } else {
-        bootstrap();
-    }
+    document.readyState === 'loading'
+        ? document.addEventListener('DOMContentLoaded', bootstrap, { once: true })
+        : bootstrap();
 
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -742,8 +771,8 @@
 
     const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
     if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-        const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim();
-        const observeRootElement = document.querySelector('[data-pp-observe-root-form-draft]');
+        const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
+            , observeRootElement = document.querySelector('[data-pp-observe-root-form-draft]');
         let observeRoot = observeRootElement || document.body || document.documentElement;
 
         if (observeRootSelector && !observeRootElement) {

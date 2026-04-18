@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Renderizador de plantillas simple para reemplazo de variables en HTML.
  * @version 3.0
  * @since 2026
@@ -44,6 +44,11 @@
 
 	/**
 	 * Clase TemplateRenderizer para renderizar plantillas HTML con datos dinámicos.
+	 *
+	 * Flujo:
+	 * 1. Obtiene plantilla desde selector CSS.
+	 * 2. Resuelve placeholders `{{prop}}` detectados o definidos por configuración.
+	 * 3. Renderiza HTML final reemplazando valores anidados del objeto de datos.
 	 * @class TemplateRenderizer
 	 */
 	class TemplateRenderizer {

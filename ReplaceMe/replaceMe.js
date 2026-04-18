@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para reemplazar un elemento por HTML remoto al hacer clic.
  * @version 3.0
  * @since 2026
@@ -75,6 +75,11 @@
 
 	/**
 	 * Clase principal del plugin ReplaceMe.
+	 *
+	 * Flujo:
+	 * 1. Intercepta click en el trigger.
+	 * 2. Solicita HTML remoto con fetch.
+	 * 3. Reemplaza el nodo actual con el HTML recibido.
 	 * @class ReplaceMe
 	 */
 	class ReplaceMe {
@@ -92,6 +97,7 @@
 
 		/**
 		 * Vincula el evento click al elemento para reemplazarlo por HTML remoto.
+		 * @returns {void}
 		 */
 		bind() {
 			if (this.isBound) return;
@@ -101,6 +107,7 @@
 
 		/**
 		 * Desmonta la instancia y libera sus listeners.
+		 * @returns {void}
 		 */
 		destroy() {
 			if (!this.isBound) return;
@@ -112,6 +119,7 @@
 		/**
 		 * Maneja el click para descargar y reemplazar HTML.
 		 * @param {MouseEvent} evt - Evento click.
+		 * @returns {Promise<void>}
 		 */
 		async handleClick(evt) {
 			evt.preventDefault();
@@ -140,6 +148,12 @@
 			}
 		}
 
+		/**
+		 * Inicializa (o reutiliza) una instancia del plugin.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @returns {ReplaceMe}
+		 */
 		static init(element, options = {}) {
 			if (!(element instanceof HTMLElement)) {
 				throw new Error('Error: ReplaceMe.init requiere un HTMLElement.');
@@ -158,11 +172,21 @@
 			return instance;
 		}
 
+		/**
+		 * Obtiene la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {ReplaceMe|null}
+		 */
 		static getInstance(element) {
 			if (!(element instanceof HTMLElement)) 	return null;
 			return INSTANCES.get(element) || null;
 		}
 
+		/**
+		 * Destruye la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {boolean}
+		 */
 		static destroy(element) {
 			const instance = ReplaceMe.getInstance(element);
 			if (!instance) return false;
@@ -170,10 +194,21 @@
 			return true;
 		}
 
+		/**
+		 * Inicializa todas las coincidencias dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @param {Object} [options={}] Opciones compartidas.
+		 * @returns {ReplaceMe[]}
+		 */
 		static initAll(root = document, options = {}) {
 			return getSubjects(root).map((element) => ReplaceMe.init(element, options));
 		}
 
+		/**
+		 * Destruye todas las instancias encontradas dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @returns {number}
+		 */
 		static destroyAll(root = document) {
 			return getSubjects(root).reduce((destroyedCount, element) => {
 				return ReplaceMe.destroy(element) ? destroyedCount + 1 : destroyedCount;
@@ -181,6 +216,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias y observa cambios del DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		ReplaceMe.initAll(document);
 

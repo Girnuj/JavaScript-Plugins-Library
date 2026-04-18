@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para mostrar etiquetas amigables en switches de entrada.
  * @version 3.0
  * @since 2026
@@ -59,6 +59,11 @@
 
 	/**
 	 * Gestiona la sincronizacion entre un switch y un texto objetivo amigable.
+	 *
+	 * Flujo:
+	 * 1. Resuelve el target (label o selector custom).
+	 * 2. Escucha cambios del input.
+	 * 3. Actualiza el texto segun estado checked/unchecked.
 	 * @class InputSwitchFriendly
 	 */
 	class InputSwitchFriendly {
@@ -200,6 +205,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias del plugin y observa cambios en el DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		InputSwitchFriendly.initAll(document);
 

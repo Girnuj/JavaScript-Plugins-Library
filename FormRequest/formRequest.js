@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Plugin nativo para enviar formularios con fetch usando atributos data-*.
  * @version 1.0
  * @since 2026
@@ -52,6 +52,12 @@
         return method || fallback;
     };
 
+    /**
+     * Convierte una lista CSV de metodos HTTP en una lista normalizada en mayusculas.
+     *
+     * @param {string|undefined|null} value Valor crudo proveniente de `data-form-allowed-methods`.
+     * @returns {string[]|null} Metodos validos o `null` si no hay datos utilizables.
+     */
     const parseAllowedMethods = (value) => {
         if (!value || typeof value !== 'string') return null;
         const methods = value
@@ -66,6 +72,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Parsea una lista CSV de codigos HTTP y filtra valores fuera de rango.
+     *
+     * @param {string|undefined|null} value Valor crudo con codigos separados por coma.
+     * @returns {number[]|null} Codigos HTTP entre 100 y 599, o `null` si no hay codigos validos.
+     */
     const parseStatusCodes = (value) => {
         if (!value || typeof value !== 'string') return null;
         const codes = value
@@ -156,6 +168,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Extrae opciones declarativas (`data-form-*`) desde un formulario.
+     *
+     * @param {HTMLFormElement} element Formulario sujeto del plugin.
+     * @returns {Object} Objeto parcial de opciones listo para mezclar con defaults.
+     */
     const getOptionsFromData = (element) => {
         const resetOnSuccess = parseBoolean(element.dataset.formResetOnSuccess)
             , sameOrigin = parseBoolean(element.dataset.formSameOrigin)
@@ -204,18 +222,24 @@
     /**
      * Controlador principal para envio de formularios por `fetch`.
      *
-     * Responsabilidades:
-     * - Interceptar submit del formulario.
-     * - Construir y ejecutar la solicitud HTTP segun configuracion/data-attributes.
-     * - Gestionar render de respuesta HTML/JSON.
-     * - Emitir eventos de ciclo de vida (`before`, `success`, `error`, `complete`).
+     * Flujo resumido:
+     * 1. Intercepta el submit del formulario.
+     * 2. Construye el request seguro (metodo, URL, headers, CSRF).
+     * 3. Ejecuta `beforeSend` y emite `before.plugin.formRequest` (cancelable).
+     * 4. Ejecuta la solicitud con timeout/reintentos opcionales.
+     * 5. Renderiza respuesta y emite eventos finales (`success` o `error`, luego `complete`).
      *
      * @class FormRequest
+     * @fires before.plugin.formRequest
+     * @fires success.plugin.formRequest
+     * @fires error.plugin.formRequest
+     * @fires complete.plugin.formRequest
      */
     class FormRequest {
         /**
+         * Crea una instancia para interceptar y enviar el formulario via fetch.
          * @param {HTMLFormElement} element Formulario a controlar.
-         * @param {Object} options Opciones de inicializacion.
+         * @param {Object} options Opciones de configuración de la instancia.
          * @param {boolean} [options.sameOrigin=true] Restringe requests a mismo origen.
          * @param {string[]} [options.allowedMethods] Metodos HTTP permitidos.
          * @param {'auto'|'html'|'json'} [options.responseType='auto'] Tipo de respuesta esperado.
@@ -247,8 +271,9 @@
         }
 
         /**
-         * Resuelve el elemento destino configurado en `data-form-target`.
-         * @returns {Element|null}
+         * Resuelve el contenedor de salida configurado en `data-form-target`.
+         *
+         * @returns {Element|null} Elemento destino para render HTML, o `null` si no hay selector.
          */
         get targetElement() {
             const selector = this.subject.getAttribute('data-form-target');
@@ -256,6 +281,12 @@
             return document.querySelector(selector);
         }
 
+        /**
+         * Actualiza estado de carga del formulario y de sus botones submit.
+         *
+         * @param {boolean} isLoading Indica si el formulario esta procesando una solicitud.
+         * @returns {void}
+         */
         setLoadingState(isLoading) {
             const submitButtons = Array.from(this.subject.querySelectorAll('[type="submit"]'));
             submitButtons.forEach((button) => {
@@ -265,6 +296,11 @@
             this.subject.classList.toggle(this.options.loadingClass || CLASS_NAME_LOADING, isLoading);
         }
 
+        /**
+         * Elimina marcas y mensajes de validacion previos del lado cliente/servidor.
+         *
+         * @returns {void}
+         */
         clearFieldErrors() {
             Array.from(this.subject.elements).forEach((field) => {
                 if (!(field instanceof HTMLElement)) return;
@@ -279,6 +315,12 @@
             });
         }
 
+        /**
+         * Aplica errores por campo en base a un mapa de errores del backend.
+         *
+         * @param {Object<string, string|string[]>} errors Objeto de errores por nombre de campo.
+         * @returns {void}
+         */
         applyFieldErrors(errors) {
             if (!errors || typeof errors !== 'object') return;
 
@@ -301,12 +343,25 @@
             });
         }
 
+        /**
+         * Renderiza HTML de respuesta en el target configurado.
+         *
+         * @param {string} text Contenido HTML a inyectar.
+         * @returns {void}
+         */
         renderHtml(text) {
             const target = this.targetElement;
             if (!target || !text) return;
             target.innerHTML = text;
         }
 
+        /**
+         * Gestiona una respuesta exitosa en modo JSON.
+         *
+         * @param {*} data Cuerpo parseado de la respuesta.
+         * @param {Response} response Objeto de respuesta fetch.
+         * @returns {void}
+         */
         handleJsonSuccess(data, response) {
             if (data && typeof data === 'object' && data.html && typeof data.html === 'string') {
                 this.renderHtml(data.html);
@@ -318,6 +373,13 @@
             }));
         }
 
+        /**
+         * Gestiona una respuesta exitosa en modo HTML/text.
+         *
+         * @param {string} text Cuerpo de respuesta.
+         * @param {Response} response Objeto de respuesta fetch.
+         * @returns {void}
+         */
         handleHtmlSuccess(text, response) {
             this.renderHtml(text);
             this.options.onSuccess && this.options.onSuccess(text, response, this.subject);
@@ -326,6 +388,12 @@
             }));
         }
 
+        /**
+         * Construye el request final a partir del formulario y la configuracion activa.
+         *
+         * @param {HTMLFormElement} form Formulario origen.
+         * @returns {{method:string,url:string,requestInit:RequestInit}}
+         */
         buildRequest(form) {
             const action = form.getAttribute('action') || window.location.href
                 , strictSameOrigin = this.options.sameOrigin !== false
@@ -364,6 +432,11 @@
             };
         }
 
+        /**
+         * Resuelve token CSRF desde opcion explicita o meta tag.
+         *
+         * @returns {string} Token CSRF o cadena vacia si no existe.
+         */
         getCsrfToken() {
             if (typeof this.options.csrfToken === 'string' && this.options.csrfToken.trim()) {
                 return this.options.csrfToken.trim();
@@ -377,6 +450,12 @@
             return meta ? String(meta.getAttribute('content') || '').trim() : '';
         }
 
+        /**
+         * Inyecta header CSRF en requests no seguros (no GET/HEAD).
+         *
+         * @param {{method:string,url:string,requestInit:RequestInit}} request Request mutable.
+         * @returns {void}
+         */
         applySecurityHeaders(request) {
             const method = normalizeMethod(request.method, 'POST');
             if (method === 'GET' || method === 'HEAD') return;
@@ -396,6 +475,12 @@
             request.requestInit.headers = headers;
         }
 
+        /**
+         * Combina headers personalizados en el request actual.
+         *
+         * @param {{method:string,url:string,requestInit:RequestInit}} request Request mutable.
+         * @returns {void}
+         */
         applyCustomHeaders(request) {
             const customHeaders = this.options && this.options.headers && typeof this.options.headers === 'object'
                 ? this.options.headers
@@ -414,6 +499,12 @@
             request.requestInit.headers = headers;
         }
 
+        /**
+         * Ejecuta fetch con estrategia de timeout y reintento.
+         *
+         * @param {{method:string,url:string,requestInit:RequestInit}} request Request preconstruido.
+         * @returns {Promise<Response>}
+         */
         async runRequest(request) {
             const retryCount = Math.max(0, Math.floor(parseNumber(this.options.retryCount, 0)))
                 , retryDelayMs = Math.max(0, parseNumber(this.options.retryDelayMs, 0))
@@ -474,6 +565,12 @@
             throw new Error('Error: no fue posible completar la solicitud.');
         }
 
+        /**
+         * Aplica debounce opcional a solicitudes GET.
+         *
+         * @param {string} method Metodo HTTP solicitado.
+         * @returns {Promise<void>}
+         */
         waitForDebounce(method) {
             const debounceMs = Math.max(0, parseNumber(this.options.debounceGetMs, 0));
             if (method !== 'GET' || debounceMs === 0) return Promise.resolve();
@@ -491,6 +588,14 @@
             });
         }
 
+        /**
+         * Notifica error por hook y evento publico.
+         *
+         * @param {*} data Datos de error (respuesta parseada o null).
+         * @param {Response|null} response Respuesta HTTP asociada.
+         * @param {Error|null} error Error capturado en excepciones de red/runtime.
+         * @returns {void}
+         */
         notifyError(data, response, error) {
             this.options.onError && this.options.onError(data, response, error, this.subject);
             this.subject.dispatchEvent(new CustomEvent('error.plugin.formRequest', {
@@ -498,6 +603,12 @@
             }));
         }
 
+        /**
+         * Handler principal de submit del formulario controlado.
+         *
+         * @param {SubmitEvent} evt Evento submit.
+         * @returns {Promise<void>}
+         */
         async handleSubmit(evt) {
             const form = evt.target;
             if (!(form instanceof HTMLFormElement)) return;
@@ -642,7 +753,7 @@
         /**
          * Inicializa o reutiliza una instancia para un formulario.
          * @param {HTMLFormElement} element Formulario objetivo.
-         * @param {Object} [options={}] Opciones de inicializacion.
+         * @param {Object} [options={}] Opciones de configuración de la instancia.
          * @returns {FormRequest}
          */
         static init(element, options = {}) {
@@ -725,8 +836,8 @@
 
         const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
         if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-            const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim();
-            const observeRootElement = document.querySelector('[data-pp-observe-root-form-request]');
+            const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
+                , observeRootElement = document.querySelector('[data-pp-observe-root-form-request]');
             let observeRoot = observeRootElement || document.body || document.documentElement;
 
             if (observeRootSelector && !observeRootElement) {

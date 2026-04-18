@@ -45,6 +45,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Intenta parsear JSON sin lanzar excepciones.
+     *
+     * @param {string|undefined|null} value Cadena JSON candidata.
+     * @returns {*|undefined} Valor parseado o `undefined` cuando falla/esta vacio.
+     */
     const parseJsonSafe = (value) => {
         if (typeof value !== 'string' || !value.trim()) return undefined;
         try {
@@ -98,6 +104,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Determina si un nodo puede sincronizarse con query params.
+     *
+     * @param {unknown} element Nodo candidato.
+     * @returns {boolean} `true` para `input`, `select` o `textarea`.
+     */
     const isElementSyncable = (element) => {
         return element instanceof HTMLInputElement
             || element instanceof HTMLSelectElement
@@ -107,6 +119,14 @@
     const getOptionsFromData = (element) => {
         const options = {};
 
+        /**
+         * Asigna una opcion si el valor string existe y no esta vacio.
+         *
+         * @param {string} key Clave destino en el objeto `options`.
+         * @param {string|undefined} value Valor crudo proveniente de dataset.
+         * @param {Function} [transform] Transformador opcional del valor final.
+         * @returns {void}
+         */
         const setTrimmedOption = (key, value, transform) => {
             if (typeof value !== 'string') return;
             const trimmedValue = value.trim();
@@ -211,7 +231,33 @@
         return mergedOptions;
     };
 
+    /**
+     * Sincroniza el valor de un control UI con un query param de la URL.
+     *
+     * Flujo resumido:
+     * 1. Lee valor de UI y lo normaliza por tipo.
+     * 2. Emite `before.plugin.querySyncState` (cancelable).
+     * 3. Actualiza URL con `history.pushState` o `history.replaceState`.
+     * 4. Rehidrata desde URL en init/popstate y emite eventos de ciclo.
+     *
+     * @fires before.plugin.querySyncState
+     * @fires sync.plugin.querySyncState
+     * @fires error.plugin.querySyncState
+     * @fires complete.plugin.querySyncState
+     */
     class QuerySyncState {
+        /**
+         * Crea una instancia para sincronizar un control UI con la query string.
+         * @param {HTMLElement} element Elemento sincronizable (input/select/textarea).
+         * @param {Object} options Opciones de configuración de la instancia.
+         * @param {string} options.key Query param a sincronizar.
+         * @param {'string'|'number'|'boolean'|'csv'|'json'} [options.type='string'] Tipo de serializacion.
+         * @param {'replace'|'push'} [options.history='replace'] Estrategia de historial al actualizar URL.
+         * @param {number} [options.debounceMs=0] Retardo para agrupar cambios consecutivos desde UI.
+         * @param {boolean} [options.omitDefault=false] Omite el parametro cuando coincide con valor default.
+         * @param {string} [options.resetPageKey=''] Parametro a limpiar al cambiar este estado.
+         * @param {boolean} [options.syncOnInit=true] Sincroniza desde URL al inicializar.
+         */
         constructor(element, options) {
             this.subject = element;
             this.options = { ...QUERY_SYNC_STATE_DEFAULTS, ...options };
@@ -224,6 +270,10 @@
             this.handlePopState = this.handlePopState.bind(this);
         }
 
+        /**
+         * Define listeners activos según tipo de control.
+         * @returns {Array<[string, EventListenerOrEventListenerObject, (boolean|undefined)]>}
+         */
         getListeners() {
             if (!isElementSyncable(this.subject)) return [];
 
@@ -245,24 +295,50 @@
             return [];
         }
 
+        /**
+         * Aplica add/remove de listeners sobre el control.
+         * @param {'addEventListener'|'removeEventListener'} method Metodo de EventTarget.
+         * @returns {void}
+         */
         applyListeners(method) {
             this.getListeners().forEach(([eventName, handler, useCapture]) => {
                 this.subject[method](eventName, handler, useCapture);
             });
         }
 
+        /**
+         * Handler de input para sincronización reactiva.
+         * @param {Event} event Evento input.
+         * @returns {void}
+         */
         handleInput(event) {
             this.scheduleSync('ui', event);
         }
 
+        /**
+         * Handler de change para sincronización reactiva.
+         * @param {Event} event Evento change.
+         * @returns {void}
+         */
         handleChange(event) {
             this.scheduleSync('ui', event);
         }
 
+        /**
+         * Handler de popstate para rehidratar desde URL.
+         * @param {PopStateEvent} event Evento de historial del navegador.
+         * @returns {void}
+         */
         handlePopState(event) {
             this.syncFromUrl('history', event);
         }
 
+        /**
+         * Programa sincronización a URL respetando debounce configurado.
+         * @param {string} source Origen de la sincronización.
+         * @param {Event|null} [originalEvent=null] Evento original.
+         * @returns {void}
+         */
         scheduleSync(source, originalEvent = null) {
             if (this.isApplyingFromUrl) return;
 
@@ -277,6 +353,10 @@
             }, this.options.debounceMs);
         }
 
+        /**
+         * Lee valor actual del control y lo normaliza para sincronización.
+         * @returns {*}
+         */
         readElementValue() {
             if (!isElementSyncable(this.subject)) return undefined;
 
@@ -309,6 +389,11 @@
             return this.options.trim ? rawValue.trim() : rawValue;
         }
 
+        /**
+         * Escribe valor normalizado sobre el control asociado.
+         * @param {*} value Valor a aplicar en UI.
+         * @returns {void}
+         */
         writeElementValue(value) {
             if (!isElementSyncable(this.subject)) return;
 
@@ -354,6 +439,11 @@
             this.subject.value = value == null ? '' : String(value);
         }
 
+        /**
+         * Construye detalle base para hooks y eventos del plugin.
+         * @param {Object} [baseDetail={}] Datos adicionales del ciclo actual.
+         * @returns {Object}
+         */
         buildDetail(baseDetail = {}) {
             return {
                 key: this.options.key,
@@ -364,6 +454,12 @@
             };
         }
 
+        /**
+         * Aplica valor desde URL hacia UI y emite eventos de sincronización.
+         * @param {string} [source='url'] Origen lógico del ciclo.
+         * @param {Event|null} [originalEvent=null] Evento asociado.
+         * @returns {boolean}
+         */
         syncFromUrl(source = 'url', originalEvent = null) {
             const currentParams = new URLSearchParams(window.location.search)
                 , currentRaw = currentParams.get(this.options.key)
@@ -416,6 +512,12 @@
             }
         }
 
+        /**
+         * Aplica valor desde UI hacia URL y actualiza historial.
+         * @param {string} [source='ui'] Origen lógico del ciclo.
+         * @param {Event|null} [originalEvent=null] Evento asociado.
+         * @returns {boolean}
+         */
         syncToUrl(source = 'ui', originalEvent = null) {
             if (this.isApplyingFromUrl) return false;
 
@@ -524,6 +626,11 @@
             }
         }
 
+        /**
+         * Restablece el control a default y sincroniza URL opcionalmente.
+         * @param {{syncToUrl?: boolean}} [options={}] Opciones de reset.
+         * @returns {void}
+         */
         reset(options = {}) {
             const { syncToUrl = true } = options;
             this.writeElementValue(this.options.defaultValue);
@@ -532,6 +639,10 @@
             }
         }
 
+        /**
+         * Vincula listeners e inicializa sincronización desde URL si aplica.
+         * @returns {void}
+         */
         bind() {
             if (this.isBound) return;
 
@@ -544,6 +655,10 @@
             }
         }
 
+        /**
+         * Remueve listeners y timers internos.
+         * @returns {void}
+         */
         unbind() {
             if (!this.isBound) return;
 
@@ -555,11 +670,21 @@
             this.isBound = false;
         }
 
+        /**
+         * Destruye instancia y limpia registro interno.
+         * @returns {void}
+         */
         destroy() {
             this.unbind();
             INSTANCES.delete(this.subject);
         }
 
+        /**
+         * Inicializa (o reutiliza) una instancia para un elemento.
+         * @param {HTMLElement} element Elemento objetivo.
+         * @param {Object} [options={}] Opciones de inicialización.
+         * @returns {QuerySyncState}
+         */
         static init(element, options = {}) {
             if (!(element instanceof HTMLElement)) {
                 throw new Error('Error: QuerySyncState.init requiere un HTMLElement.');
@@ -576,11 +701,21 @@
             return instance;
         }
 
+        /**
+         * Obtiene la instancia asociada al elemento.
+         * @param {HTMLElement} element Elemento objetivo.
+         * @returns {QuerySyncState|null}
+         */
         static getInstance(element) {
             if (!(element instanceof HTMLElement)) return null;
             return INSTANCES.get(element) || null;
         }
 
+        /**
+         * Destruye la instancia asociada al elemento.
+         * @param {HTMLElement} element Elemento objetivo.
+         * @returns {boolean}
+         */
         static destroy(element) {
             const instance = QuerySyncState.getInstance(element);
             if (!instance) return false;
@@ -589,10 +724,21 @@
             return true;
         }
 
+        /**
+         * Inicializa todas las coincidencias dentro de una raiz.
+         * @param {Document|Element|ParentNode} [root=document] Nodo raiz.
+         * @param {Object} [options={}] Opciones compartidas.
+         * @returns {QuerySyncState[]}
+         */
         static initAll(root = document, options = {}) {
             return getSubjects(root).map((element) => QuerySyncState.init(element, options));
         }
 
+        /**
+         * Destruye todas las instancias encontradas dentro de una raiz.
+         * @param {Document|Element|ParentNode} [root=document] Nodo raiz.
+         * @returns {number}
+         */
         static destroyAll(root = document) {
             return getSubjects(root).reduce((destroyedCount, element) => {
                 return QuerySyncState.destroy(element) ? destroyedCount + 1 : destroyedCount;
@@ -600,6 +746,11 @@
         }
     }
 
+    /**
+     * Inicializa instancias presentes y habilita auto-init por MutationObserver.
+     *
+     * @returns {void}
+     */
     const startAutoInit = () => {
         QuerySyncState.initAll(document);
 

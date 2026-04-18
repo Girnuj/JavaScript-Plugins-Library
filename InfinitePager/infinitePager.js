@@ -59,6 +59,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Parsea un JSON de objeto plano para opciones de headers/params.
+     *
+     * @param {string|undefined|null} value Cadena JSON candidata.
+     * @returns {Object<string, string>|null} Objeto normalizado o `null` si no aplica.
+     */
     const parseJsonObject = (value) => {
         if (!value || typeof value !== 'string') return null;
 
@@ -147,6 +153,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Lee opciones declarativas del paginador desde `data-pager-*` y aliases legacy.
+     *
+     * @param {HTMLElement} element Elemento sujeto del plugin.
+     * @returns {Object} Opciones parciales para construir la instancia.
+     */
     const getOptionsFromData = (element) => {
         const getDataValue = (pagerKey, legacyKey) => {
             const pagerValue = element.dataset[pagerKey];
@@ -154,6 +166,14 @@
             return legacyKey ? element.dataset[legacyKey] : undefined;
         };
 
+        /**
+         * Asigna una opcion string solo cuando contiene valor util.
+         *
+         * @param {string} key Clave destino en `options`.
+         * @param {string|undefined} value Valor crudo a validar.
+         * @param {Function} [transform] Transformador opcional del valor final.
+         * @returns {void}
+         */
         const setTrimmedOption = (key, value, transform) => {
             if (typeof value !== 'string') return;
             const trimmedValue = value.trim();
@@ -209,12 +229,12 @@
         pageSize !== undefined && (options.pageSize = Math.max(1, Math.floor(parseNumber(pageSize, INFINITE_PAGER_DEFAULTS.pageSize))));
         threshold !== undefined && (options.threshold = Math.max(0, parseNumber(threshold, INFINITE_PAGER_DEFAULTS.threshold)));
 
-        if (method) options.method = method;
-        if (mode) options.mode = mode;
-        if (responseMode) options.responseMode = responseMode;
-        if (sameOrigin !== undefined) options.sameOrigin = sameOrigin;
-        if (stopOnEmpty !== undefined) options.stopOnEmpty = stopOnEmpty;
-        if (autoLoadOnInit !== undefined) options.autoLoadOnInit = autoLoadOnInit;
+        method && (options.method = method);
+        mode && (options.mode = mode);
+        responseMode && (options.responseMode = responseMode);
+        sameOrigin !== undefined && (options.sameOrigin = sameOrigin);
+        stopOnEmpty !== undefined && (options.stopOnEmpty = stopOnEmpty);
+        autoLoadOnInit !== undefined && (options.autoLoadOnInit = autoLoadOnInit);
 
         return options;
     };
@@ -246,12 +266,25 @@
 
     /**
      * Plugin para cargar paginas incrementalmente en listados remotos.
+     *
+     * Flujo resumido:
+     * 1. Construye URL con pagina actual y tamano de pagina.
+     * 2. Emite `before.plugin.infinitePager` (cancelable).
+     * 3. Consume endpoint y renderiza HTML/JSON segun `responseMode`.
+     * 4. Actualiza paginacion interna y emite eventos de ciclo (`success`, `complete`, `end`, `error`).
+     *
      * @class InfinitePager
+     * @fires before.plugin.infinitePager
+     * @fires success.plugin.infinitePager
+     * @fires complete.plugin.infinitePager
+     * @fires end.plugin.infinitePager
+     * @fires error.plugin.infinitePager
      */
     class InfinitePager {
         /**
+         * Crea una instancia para controlar la carga incremental del listado remoto.
          * @param {HTMLElement} element Trigger principal del plugin.
-         * @param {Object} options Opciones validadas de inicializacion.
+         * @param {Object} options Opciones de configuración validadas de la instancia.
          */
         constructor(element, options) {
             this.subject = element;
@@ -451,8 +484,11 @@
 
         /**
          * Ejecuta carga de la siguiente pagina si el estado lo permite.
+         *
+         * No inicia una nueva solicitud cuando ya hay una activa o cuando no hay mas paginas.
+         *
          * @param {Event|null} [triggerEvent=null] Evento disparador opcional.
-         * @returns {Promise<boolean>} True cuando agrega contenido nuevo.
+         * @returns {Promise<boolean>} `true` cuando se agrega contenido nuevo al target.
          */
         async loadNext(triggerEvent = null) {
             if (this.isLoading || !this.hasMore) return false;
@@ -775,6 +811,11 @@
         }
     }
 
+    /**
+     * Inicializa instancias presentes en DOM y habilita auto-init por MutationObserver.
+     *
+     * @returns {void}
+     */
     const startAutoInit = () => {
         InfinitePager.initAll(document);
 

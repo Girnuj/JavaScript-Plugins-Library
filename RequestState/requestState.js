@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Plugin nativo para gestionar estados de request (idle/loading/success/error) por data-*.
  * @version 1.0
  * @since 2026
@@ -62,6 +62,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Convierte una cadena CSV en codigos HTTP validos para estrategia de retry.
+     *
+     * @param {string|undefined|null} value Valor crudo de `data-rs-retry-statuses`.
+     * @returns {number[]|null} Codigos entre 100 y 599, o `null` si no hay datos validos.
+     */
     const parseStatusCodes = (value) => {
         if (!value || typeof value !== 'string') return null;
         const codes = value
@@ -76,6 +82,12 @@
         return method || fallback;
     };
 
+    /**
+     * Parsea un JSON de headers y retorna objeto cuando el formato es valido.
+     *
+     * @param {string|undefined|null} value JSON crudo de `data-rs-headers-json`.
+     * @returns {Object<string, string>|null} Headers parseados o `null` si el JSON no aplica.
+     */
     const parseHeadersJson = (value) => {
         if (!value || typeof value !== 'string') return null;
         try {
@@ -185,6 +197,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Construye payload dinamico leyendo atributos `data-rs-name-*` del trigger.
+     *
+     * @param {HTMLElement} element Elemento sujeto del plugin.
+     * @returns {Object<string, string>} Payload con keys normalizadas a camelCase.
+     */
     const toDynamicPayload = (element) => {
         const payload = {};
 
@@ -254,6 +272,7 @@
     };
 
     /**
+     * Opciones publicas para configurar estados visuales, retry y request remoto.
      * @typedef {Object} RequestStateOptions
      * @property {number} [delayMs=600] Retardo base en ms para simulaciones o transiciones.
      * @property {number} [autoResetMs=0] Si es mayor a 0, vuelve a `idle` tras ese tiempo.
@@ -285,15 +304,28 @@
      */
 
     /**
-     * Plugin para manejar estados visuales de acciones async en botones/enlaces.
+     * Plugin para manejar estados visuales de acciones async en botones, enlaces o formularios.
+     *
+     * Flujo resumido:
+     * 1. Entra en `loading` y bloquea interaccion (opcional).
+     * 2. Simula resultado o ejecuta request real segun configuracion.
+     * 3. Cambia a `success` o `error` y renderiza salida.
+     * 4. Ejecuta auto-reset a `idle` cuando aplica.
      *
      * Estados soportados: `idle`, `loading`, `success`, `error`.
      * Tambien permite simulacion para QA (`data-rs-mock`) y request real opcional (`data-rs-send`).
+     *
+     * @fires before.plugin.requestState
+     * @fires state.plugin.requestState
+     * @fires success.plugin.requestState
+     * @fires error.plugin.requestState
+     * @fires complete.plugin.requestState
      */
     class RequestState {
         /**
+         * Crea una instancia para orquestar el ciclo de estados async del sujeto.
          * @param {HTMLElement} element Trigger del flujo de estado.
-         * @param {RequestStateOptions} options Opciones de inicializacion.
+         * @param {RequestStateOptions} options Opciones de configuración de la instancia.
          */
         constructor(element, options) {
             this.subject = element;
@@ -309,6 +341,8 @@
         }
 
         /**
+         * Indica si el sujeto actual es un formulario.
+         *
          * @returns {boolean}
          */
         get isFormSubject() {
@@ -442,6 +476,12 @@
                 responseNode.textContent = value == null ? '' : String(value);
             };
 
+            /**
+             * Renderiza un valor en formato JSON legible dentro del nodo respuesta.
+             *
+             * @param {*} value Valor a serializar.
+             * @returns {void}
+             */
             const renderJson = (value) => {
                 const safeValue = value == null
                     ? {}
@@ -578,9 +618,12 @@
         }
 
         /**
-         * Ejecuta request real si `sendRequest` y endpoint estan configurados.
+         * Ejecuta request real si `sendRequest` y `endpoint` estan configurados.
+         *
+         * Incluye timeout, retry por estado HTTP y retry por falla de red.
+         *
          * @param {Object} payload Payload a enviar (cuando aplique).
-         * @returns {Promise<{ok:boolean,status:number,data:any}>}
+         * @returns {Promise<{ok:boolean,status:number,data:any,attempt?:number}>}
          */
         async executeRequest(payload) {
             const endpoint = this.subject.dataset.rsEndpoint || this.options.endpoint
@@ -673,7 +716,10 @@
 
         /**
          * Ejecuta el flujo principal del trigger.
-         * @param {Event} [evt] Evento de click asociado.
+         *
+         * El flujo emite `before`, cambios de estado y evento final (`success`/`error` + `complete`).
+         *
+         * @param {Event} [evt] Evento asociado (click o submit).
          * @returns {Promise<void>}
          */
         async run(evt) {

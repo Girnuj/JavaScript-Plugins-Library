@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para previsualizar videos de YouTube a partir de una URL ingresada.
  * @version 3.0
  * @since 2026
@@ -74,6 +74,11 @@
 	/**
 	 * Clase principal del plugin VideoUrlPreview.
 	 * Permite previsualizar un video de YouTube en un iframe a partir de una URL ingresada.
+	 *
+	 * Flujo:
+	 * 1. Escucha `input`/`change` del campo de URL.
+	 * 2. Extrae ID de YouTube cuando la URL es válida.
+	 * 3. Actualiza `src` del iframe destino o limpia vista previa.
 	 * @class VideoUrlPreview
 	 */
 	class VideoUrlPreview {
@@ -105,6 +110,7 @@
 
 		/**
 		 * Vincula los eventos del input.
+		 * @returns {void}
 		 */
 		bind() {
 			if (this.isBound) return;
@@ -115,6 +121,7 @@
 
 		/**
 		 * Desvincula los eventos del input.
+		 * @returns {void}
 		 */
 		unbind() {
 			if (!this.isBound) return;
@@ -136,6 +143,7 @@
 		/**
 		 * Aplica addEventListener/removeEventListener en lote.
 		 * @param {'addEventListener'|'removeEventListener'} method - Metodo del EventTarget a ejecutar.
+		 * @returns {void}
 		 */
 		applyListeners(method) {
 			this.getListeners().forEach(([eventName, handler]) => {
@@ -147,6 +155,7 @@
 		 * Desmonta la instancia y libera sus listeners.
 		 * @param {Object} [options] - Configuración del desmontaje.
 		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar el iframe actual.
+		 * @returns {void}
 		 */
 		destroy(options = {}) {
 			if (!this.isBound) return;
@@ -162,6 +171,7 @@
 
 		/**
 		 * Limpia la vista previa actual.
+		 * @returns {void}
 		 */
 		clearPreview() {
 			clearFrame(this.target);
@@ -171,6 +181,7 @@
 		 * Actualiza la previsualización.
 		 * @param {string} inputValue - Valor actual del input.
 		 * @param {boolean} clearOnInvalid - Si debe limpiar cuando el valor es inválido.
+		 * @returns {void}
 		 */
 		updatePreview(inputValue, clearOnInvalid = false) {
 			const value = `${inputValue || ''}`.trim()
@@ -191,6 +202,7 @@
 		/**
 		 * Maneja el evento input.
 		 * @param {Event} evt - Evento input.
+		 * @returns {void}
 		 */
 		handleInput(evt) {
 			this.updatePreview(evt.target.value, false);
@@ -199,11 +211,18 @@
 		/**
 		 * Maneja el evento change.
 		 * @param {Event} evt - Evento change.
+		 * @returns {void}
 		 */
 		handleChange(evt) {
 			this.updatePreview(evt.target.value, true);
 		}
 
+		/**
+		 * Inicializa (o reutiliza) una instancia del plugin.
+		 * @param {HTMLInputElement} element Input objetivo.
+		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @returns {VideoUrlPreview}
+		 */
 		static init(element, options = {}) {
 			if (!(element instanceof HTMLInputElement)) {
 				throw new Error('Error: VideoUrlPreview.init requiere un <input>.');
@@ -220,11 +239,22 @@
 			return instance;
 		}
 
+		/**
+		 * Obtiene la instancia asociada a un input.
+		 * @param {HTMLInputElement} element Input objetivo.
+		 * @returns {VideoUrlPreview|null}
+		 */
 		static getInstance(element) {
 			if (!(element instanceof HTMLInputElement)) return null;	
 			return INSTANCES.get(element) || null;
 		}
 
+		/**
+		 * Destruye la instancia asociada a un input.
+		 * @param {HTMLInputElement} element Input objetivo.
+		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @returns {boolean}
+		 */
 		static destroy(element, options = {}) {
 			const instance = VideoUrlPreview.getInstance(element);
 			if (!instance) return false;	
@@ -232,10 +262,21 @@
 			return true;
 		}
 
+		/**
+		 * Inicializa todas las coincidencias dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @returns {VideoUrlPreview[]}
+		 */
 		static initAll(root = document) {
 			return getSubjects(root).map((element) => VideoUrlPreview.init(element));
 		}
 
+		/**
+		 * Destruye todas las instancias encontradas dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @returns {number}
+		 */
 		static destroyAll(root = document, options = {}) {
 			return getSubjects(root).reduce((destroyedCount, element) => {
 				return VideoUrlPreview.destroy(element, options) ? destroyedCount + 1 : destroyedCount;
@@ -243,6 +284,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias y observa cambios del DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		VideoUrlPreview.initAll(document);
 

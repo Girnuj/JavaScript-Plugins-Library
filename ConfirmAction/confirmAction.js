@@ -35,6 +35,12 @@
         onDeny: function () { },
     });
 
+    /**
+     * Convierte valores de dataset/atributos a booleano tolerante.
+     *
+     * @param {unknown} value Valor crudo a normalizar.
+     * @returns {boolean|undefined} `undefined` cuando no se puede inferir un booleano valido.
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -45,6 +51,12 @@
         return undefined;
     };
 
+    /**
+     * Obtiene todos los elementos objetivo dentro de un root dado.
+     *
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz para la busqueda.
+     * @returns {Element[]} Coleccion de elementos que cumplen el selector del plugin.
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -59,6 +71,11 @@
         return subjects;
     };
 
+    /**
+     * Procesa nodos removidos en microtarea para destruir instancias huérfanas.
+     *
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -68,11 +85,23 @@
         });
     };
 
+    /**
+     * Agenda la validacion diferida de nodos removidos.
+     *
+     * @param {Node} node Nodo removido del DOM.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Lee y normaliza opciones declarativas desde atributos data-ca-*.
+     *
+     * @param {HTMLElement} element Elemento sujeto del plugin.
+     * @returns {Partial<ConfirmActionOptions>} Opciones parseadas desde dataset.
+     */
     const getOptionsFromData = (element) => {
         const options = {}
             , enabled = parseBoolean(element.dataset.caEnabled);
@@ -108,17 +137,19 @@
     };
 
     /**
+     * Estructura estandar del contexto de confirmacion emitido en hooks y eventos.
      * @typedef {Object} ConfirmActionDetail
      * @property {HTMLElement} element Elemento asociado a la accion.
      * @property {'click'|'submit'} actionType Tipo de accion confirmada.
      * @property {string} title Titulo de confirmacion.
      * @property {string} content Mensaje principal sin formato adicional.
      * @property {string} message Mensaje final mostrado al usuario.
-    * @property {'confirm'|'cancel'|'deny'} decision Resultado final de la confirmacion.
+     * @property {'confirm'|'cancel'|'deny'} decision Resultado final de la confirmacion.
      * @property {Event} originalEvent Evento original que disparo la confirmacion.
      */
 
     /**
+     * Contrato de opciones publicas para configurar el comportamiento de confirmacion.
      * @typedef {Object} ConfirmActionOptions
      * @property {string} [message='Estas seguro de continuar?'] Mensaje principal del prompt.
      * @property {string} [title=''] Titulo opcional del prompt.
@@ -139,19 +170,26 @@
      * @property {(detail: ConfirmActionDetail, element: HTMLElement) => void} [beforeConfirm] Hook previo a la confirmacion.
      * @property {(detail: ConfirmActionDetail, element: HTMLElement) => void} [onConfirm] Hook cuando el usuario confirma.
      * @property {(detail: ConfirmActionDetail, element: HTMLElement) => void} [onCancel] Hook cuando el usuario cancela.
-    * @property {(detail: ConfirmActionDetail, element: HTMLElement) => void} [onDeny] Hook cuando el usuario selecciona deny.
+     * @property {(detail: ConfirmActionDetail, element: HTMLElement) => void} [onDeny] Hook cuando el usuario selecciona deny.
      */
 
     /**
      * Controla confirmaciones para acciones sensibles en elementos con `data-confirm-action`.
      *
-     * Soporta 3 modos de resolucion:
-     * - Adapter custom (`confirmAdapter`).
-     * - Contenedor/dialog personalizado (`dialogSelector`).
-     * - Fallback nativo con `window.confirm`.
+     * Flujo general:
+     * 1. Construye un detalle normalizado de la accion (`ConfirmActionDetail`).
+     * 2. Ejecuta `beforeConfirm` y emite `before.plugin.confirmAction` (cancelable).
+     * 3. Resuelve la decision por `confirmAdapter`, `dialogSelector` o `window.confirm`.
+     * 4. Emite eventos finales segun decision (`confirmed`, `cancelled`, `denied`).
+     *
+     * @fires before.plugin.confirmAction
+     * @fires confirmed.plugin.confirmAction
+     * @fires cancelled.plugin.confirmAction
+     * @fires denied.plugin.confirmAction
      */
     class ConfirmAction {
         /**
+         * Crea una instancia del controlador de confirmacion para el elemento indicado.
          * @param {HTMLElement} element Elemento objetivo (boton, link o formulario).
          * @param {ConfirmActionOptions} options Configuracion de instancia.
          */
@@ -166,21 +204,29 @@
         }
 
         /**
-         * @returns {string}
+         * Obtiene el titulo efectivo para el prompt.
+         *
+         * @returns {string} Titulo saneado (sin espacios al inicio/fin).
          */
         getTitleText() {
             return String(this.options.title || '').trim();
         }
 
         /**
-         * @returns {string}
+         * Obtiene el mensaje principal efectivo de confirmacion.
+         *
+         * @returns {string} Mensaje saneado o el default del plugin cuando viene vacio.
          */
         getMessageText() {
             return String(this.options.message || '').trim() || CONFIRM_ACTION_DEFAULTS.message;
         }
 
         /**
-         * @returns {string}
+         * Construye el texto final mostrado al usuario.
+         *
+         * Si existe titulo, se concatena en dos lineas con el mensaje.
+         *
+         * @returns {string} Prompt completo para adapters/dialogs/fallback nativo.
          */
         buildPromptMessage() {
             const title = this.getTitleText()
@@ -191,8 +237,11 @@
         }
 
         /**
-         * @param {'click'|'submit'} actionType
-         * @param {Event} originalEvent
+         * Construye un detalle canonico de la accion a confirmar.
+         *
+         * @param {'click'|'submit'} actionType Tipo de interaccion original.
+         * @param {Event} originalEvent Evento que disparo el flujo.
+         * @param {'confirm'|'cancel'|'deny'} [decision='cancel'] Estado inicial de decision.
          * @returns {ConfirmActionDetail}
          */
         buildDetail(actionType, originalEvent, decision = 'cancel') {
@@ -207,6 +256,12 @@
             };
         }
 
+        /**
+         * Normaliza distintos valores de confirmacion a una decision canonica.
+         *
+         * @param {unknown} value Valor emitido por adapter/dialog/preConfirm.
+         * @returns {'confirm'|'cancel'|'deny'}
+         */
         normalizeDecision(value) {
             if (value === true || value === 'confirm') return 'confirm';
             if (value === 'deny') return 'deny';
@@ -214,6 +269,8 @@
         }
 
         /**
+         * Indica si la confirmacion esta activa para la instancia.
+         *
          * @returns {boolean}
          */
         isEnabled() {
@@ -221,8 +278,10 @@
         }
 
         /**
+         * Ejecuta hook previo y emite evento cancelable antes de confirmar.
+         *
          * @param {ConfirmActionDetail} detail
-         * @returns {boolean}
+         * @returns {boolean} `false` cuando algun listener cancela el evento.
          */
         dispatchBefore(detail) {
             this.options.beforeConfirm && this.options.beforeConfirm(detail, this.subject);
@@ -235,6 +294,8 @@
         }
 
         /**
+         * Notifica una confirmacion aceptada.
+         *
          * @param {ConfirmActionDetail} detail
          * @returns {void}
          */
@@ -246,6 +307,8 @@
         }
 
         /**
+         * Notifica una confirmacion cancelada por el usuario.
+         *
          * @param {ConfirmActionDetail} detail
          * @returns {void}
          */
@@ -256,6 +319,12 @@
             }));
         }
 
+        /**
+         * Emite hooks y evento cuando el flujo termina en decision deny.
+         *
+         * @param {ConfirmActionDetail} detail
+         * @returns {void}
+         */
         dispatchDenied(detail) {
             this.options.onDeny && this.options.onDeny(detail, this.subject);
             this.subject.dispatchEvent(new CustomEvent('denied.plugin.confirmAction', {
@@ -263,6 +332,13 @@
             }));
         }
 
+        /**
+         * Aplica clases CSS (tokenizadas por espacios) sobre un boton destino.
+         *
+         * @param {Element|null} button Elemento destino.
+         * @param {string} className Cadena con clases separadas por espacio.
+         * @returns {void}
+         */
         applyButtonClass(button, className) {
             if (!(button instanceof HTMLElement)) return;
             if (!className || typeof className !== 'string') return;
@@ -271,6 +347,13 @@
             });
         }
 
+        /**
+         * Ejecuta el hook `preConfirm` y gestiona estado visual de carga.
+         *
+         * @param {ConfirmActionDetail} detail Contexto de la accion en curso.
+         * @param {Element|null} loadingTarget Boton/elemento que recibira la clase de loading.
+         * @returns {Promise<'confirm'|'cancel'|'deny'>}
+         */
         async runPreConfirm(detail, loadingTarget) {
             if (typeof this.options.preConfirm !== 'function') return 'confirm';
 
@@ -302,8 +385,10 @@
         }
 
         /**
+         * Intenta resolver la decision usando el adapter custom.
+         *
          * @param {ConfirmActionDetail} detail
-         * @returns {Promise<boolean|null>}
+         * @returns {Promise<'confirm'|'cancel'|'deny'|null>} `null` cuando no hay adapter.
          */
         async resolveByAdapter(detail) {
             if (typeof this.options.confirmAdapter !== 'function') return null;
@@ -315,8 +400,12 @@
         }
 
         /**
+         * Intenta resolver la decision con un dialog HTML personalizado.
+         *
+         * Requiere al menos botones `[data-ca-confirm]` y `[data-ca-cancel]`.
+         *
          * @param {ConfirmActionDetail} detail
-         * @returns {Promise<boolean|null>}
+         * @returns {Promise<'confirm'|'cancel'|'deny'|null>} `null` cuando el dialog no aplica.
          */
         async resolveByDialog(detail) {
             const selector = typeof this.options.dialogSelector === 'string'
@@ -366,11 +455,11 @@
             messageTarget && (messageTarget.textContent = detail.content);
 
             return new Promise((resolve) => {
-                let isDone = false;
-                let isProcessing = false;
+                let isDone = false
+                    , isProcessing = false;
                 const wasHidden = dialog.hasAttribute('hidden')
-                    , isNativeDialog = dialog instanceof HTMLDialogElement;
-                const listeners = [];
+                    , isNativeDialog = dialog instanceof HTMLDialogElement
+                    , listeners = [];
 
                 const allowEscape = this.options.allowEscape !== false
                     , allowOutsideClick = this.options.allowOutsideClick !== false;
@@ -460,8 +549,15 @@
         }
 
         /**
+         * Resuelve la decision final siguiendo el orden de prioridad configurado.
+         *
+         * Orden:
+         * 1) `confirmAdapter`
+         * 2) `dialogSelector`
+         * 3) `window.confirm` (fallback)
+         *
          * @param {ConfirmActionDetail} detail
-         * @returns {Promise<boolean>}
+         * @returns {Promise<'confirm'|'cancel'|'deny'>}
          */
         async resolveConfirmation(detail) {
             try {
@@ -483,9 +579,11 @@
         }
 
         /**
+         * Orquesta el flujo completo de confirmacion para una accion.
+         *
          * @param {'click'|'submit'} actionType
          * @param {Event} originalEvent
-         * @returns {Promise<boolean>}
+         * @returns {Promise<boolean>} `true` solo cuando la decision final es `confirm`.
          */
         async askConfirmation(actionType, originalEvent) {
             if (!this.isEnabled()) return true;
@@ -648,6 +746,8 @@
         }
 
         /**
+         * Recupera la instancia asociada a un elemento.
+         *
          * @param {HTMLElement} element
          * @returns {ConfirmAction|null}
          */
@@ -657,6 +757,8 @@
         }
 
         /**
+         * Destruye la instancia asociada al elemento si existe.
+         *
          * @param {HTMLElement} element
          * @returns {void}
          */
@@ -668,6 +770,8 @@
         }
 
         /**
+         * Inicializa todos los sujetos encontrados bajo un root.
+         *
          * @param {ParentNode|Element|Document} [root=document]
          * @returns {ConfirmAction[]}
          */
@@ -676,6 +780,8 @@
         }
 
         /**
+         * Destruye todas las instancias encontradas bajo un root.
+         *
          * @param {ParentNode|Element|Document} [root=document]
          * @returns {void}
          */
@@ -686,6 +792,11 @@
 
     window.ConfirmAction = ConfirmAction;
 
+    /**
+     * Inicializa automaticamente instancias en el documento actual.
+     *
+     * @returns {void}
+     */
     const bootstrap = () => {
         ConfirmAction.initAll(document);
     };

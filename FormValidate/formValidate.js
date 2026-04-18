@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Plugin nativo para agregar validaciones extendidas por data-* en formularios.
  * @version 1.0
  * @since 2026
@@ -37,6 +37,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Convierte una cadena CSV en una lista de tokens limpios.
+     *
+     * @param {string|undefined|null} value Valor crudo separado por comas.
+     * @returns {string[]} Lista de valores no vacios.
+     */
     const splitCsv = (value) => {
         if (!value || typeof value !== 'string') return [];
         return value
@@ -82,6 +88,12 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Extrae opciones declarativas (`data-form-validate-*`) desde el formulario.
+     *
+     * @param {HTMLFormElement} element Formulario sujeto del plugin.
+     * @returns {Object} Opciones parciales para mezclar con defaults.
+     */
     const getOptionsFromData = (element) => {
         const options = {}
             , focusFirstInvalid = parseBoolean(element.dataset.formValidateFocusFirst)
@@ -110,6 +122,12 @@
         return field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement;
     };
 
+    /**
+     * Determina si un campo define reglas extendidas de validacion por data attributes.
+     *
+     * @param {Element} field Campo candidato.
+     * @returns {boolean} `true` cuando el campo tiene al menos una regla custom.
+     */
     const isRuleHost = (field) => {
         if (!isSupportedField(field)) return false;
         if (field.disabled) return false;
@@ -210,6 +228,7 @@
     };
 
     /**
+     * Opciones publicas para configurar reglas, clases y estrategia de validacion.
      * @typedef {Object} FormValidateOptions
      * @property {string} [invalidClass='is-invalid'] Clase CSS global para campos invalidos.
      * @property {string} [validClass='is-valid'] Clase CSS global para campos validos.
@@ -222,6 +241,7 @@
      */
 
     /**
+     * Resultado tipado para un campo que no supera la validacion.
      * @typedef {Object} ValidationError
      * @property {false} valid Indica error de validacion.
      * @property {HTMLElement} field Campo que fallo la regla.
@@ -230,6 +250,7 @@
      */
 
     /**
+     * Resultado tipado para un campo que supera la validacion.
      * @typedef {Object} ValidationSuccess
      * @property {true} valid Indica validacion exitosa.
      * @property {HTMLElement} field Campo validado.
@@ -245,11 +266,16 @@
      * - Sincronizar clases visuales/ARIA por estado valido o invalido.
      * - Integrarse con submit nativo y con el evento `before.plugin.formRequest`.
      * - Exponer API publica estatica para inicializacion y destruccion.
+     *
+     * @fires before.plugin.formValidate
+     * @fires valid.plugin.formValidate
+     * @fires invalid.plugin.formValidate
      */
     class FormValidate {
         /**
+         * Crea una instancia de validacion para el formulario objetivo.
          * @param {HTMLFormElement} element Formulario objetivo a validar.
-         * @param {FormValidateOptions} options Opciones de configuracion fusionadas.
+         * @param {FormValidateOptions} options Opciones de configuración validadas de la instancia.
          */
         constructor(element, options) {
             this.subject = element;
@@ -944,7 +970,7 @@
         /**
          * Inicializa o reutiliza la instancia asociada al formulario.
          * @param {HTMLFormElement} element Formulario objetivo.
-         * @param {FormValidateOptions} [options={}] Opciones de inicializacion.
+         * @param {FormValidateOptions} [options={}] Opciones de configuración de la instancia.
          * @returns {FormValidate}
          */
         static init(element, options = {}) {
@@ -1006,15 +1032,18 @@
 
     window.FormValidate = FormValidate;
 
+    /**
+     * Inicializa automaticamente las instancias del plugin y observa cambios en el DOM.
+     *
+     * @returns {void}
+     */
     const bootstrap = () => {
         FormValidate.initAll(document);
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
-    } else {
-        bootstrap();
-    }
+    document.readyState === 'loading'
+        ? document.addEventListener('DOMContentLoaded', bootstrap, { once: true })
+        : bootstrap();
 
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -1032,8 +1061,8 @@
 
         const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
         if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-            const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim();
-            const observeRootElement = document.querySelector('[data-pp-observe-root-form-validate]');
+            const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
+                , observeRootElement = document.querySelector('[data-pp-observe-root-form-validate]');
             let observeRoot = observeRootElement || document.body || document.documentElement;
 
             if (observeRootSelector && !observeRootElement) {

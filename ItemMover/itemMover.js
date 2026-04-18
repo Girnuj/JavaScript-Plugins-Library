@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para mover elementos HTML dentro de una lista o colección.
  * @version 3.0
  * @since 2026
@@ -57,6 +57,11 @@
 	/**
 	 * Clase principal del plugin ItemMover.
 	 * Permite mover elementos HTML dentro de una lista, hacia adelante o atrás.
+	 *
+	 * Flujo:
+	 * 1. Resuelve elemento target vía `data-move-target`.
+	 * 2. Obtiene elemento adyacente según dirección configurada.
+	 * 3. Intercambia ambos nodos en el DOM.
 	 * @class ItemMover
 	 */
 	class ItemMover {
@@ -116,6 +121,7 @@
 
 		/**
 		 * Vincula el evento de clic al elemento para moverlo.
+		 * @returns {void}
 		 */
 		bind() {
 			if (this.isBound) return;
@@ -125,6 +131,7 @@
 
 		/**
 		 * Desmonta la instancia y libera sus listeners.
+		 * @returns {void}
 		 */
 		destroy() {
 			if (!this.isBound) return;
@@ -136,6 +143,7 @@
 		/**
 		 * Maneja el evento click para mover el elemento configurado.
 		 * @param {MouseEvent} evt - Evento click.
+		 * @returns {void}
 		 */
 		handleClick(evt) {
 			evt.preventDefault();
@@ -148,6 +156,12 @@
 			this.swapElements(target, adjacent);
 		}
 
+		/**
+		 * Inicializa (o reutiliza) una instancia del plugin.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @returns {ItemMover}
+		 */
 		static init(element, options = {}) {
 			if (!(element instanceof HTMLElement)) {
 				throw new Error('Error: ItemMover.init requiere un HTMLElement.');
@@ -172,11 +186,21 @@
 			return instance;
 		}
 
+		/**
+		 * Obtiene la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {ItemMover|null}
+		 */
 		static getInstance(element) {
 			if (!(element instanceof HTMLElement)) return null;	
 			return INSTANCES.get(element) || null;
 		}
 
+		/**
+		 * Destruye la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {boolean}
+		 */
 		static destroy(element) {
 			const instance = ItemMover.getInstance(element);
 			if (!instance) return false;
@@ -184,10 +208,21 @@
 			return true;
 		}
 
+		/**
+		 * Inicializa todas las coincidencias dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @param {Object} [options={}] Opciones compartidas.
+		 * @returns {ItemMover[]}
+		 */
 		static initAll(root = document, options = {}) {
 			return getSubjects(root).map((element) => ItemMover.init(element, options));
 		}
 
+		/**
+		 * Destruye todas las instancias encontradas dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @returns {number}
+		 */
 		static destroyAll(root = document) {
 			return getSubjects(root).reduce((destroyedCount, element) => {
 				return ItemMover.destroy(element) ? destroyedCount + 1 : destroyedCount;
@@ -195,6 +230,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias y observa cambios del DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		ItemMover.initAll(document);
 

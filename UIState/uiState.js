@@ -71,6 +71,13 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Reemplaza placeholders `{{key}}` dentro de una plantilla HTML.
+     *
+     * @param {string} html Plantilla fuente.
+     * @param {Object<string, *>} payload Datos para interpolar.
+     * @returns {string} HTML final interpolado.
+     */
     const interpolateTemplate = (html, payload) => {
         if (!html || typeof html !== 'string') return '';
         if (!payload || typeof payload !== 'object') return html;
@@ -84,6 +91,14 @@
         const options = {}
             , stateClassMap = {};
 
+        /**
+         * Asigna opcion de texto si el valor existe y no esta vacio.
+         *
+         * @param {string} key Clave destino en `options`.
+         * @param {string|undefined} value Valor crudo desde dataset.
+         * @param {Function} [transform] Transformador opcional.
+         * @returns {void}
+         */
         const setTrimmedOption = (key, value, transform) => {
             if (typeof value !== 'string') return;
             const trimmedValue = value.trim();
@@ -122,11 +137,15 @@
      * - Emite eventos para extensibilidad externa.
      *
      * @class UIState
+     * @fires before.plugin.uiState
+     * @fires changed.plugin.uiState
+     * @fires restored.plugin.uiState
      */
     class UIState {
         /**
+         * Crea una instancia para administrar transiciones de estado visual en un componente.
          * @param {HTMLElement} element Componente que recibira cambios de estado.
-         * @param {Object} options Opciones de inicializacion.
+         * @param {Object} options Opciones de configuración de la instancia.
          * @param {string} [options.baseState='default'] Estado base para restauracion.
          * @param {string} [options.classPrefix='is-state-'] Prefijo para clases por estado.
          * @param {Object<string,string>} [options.stateClassMap={}] Mapa opcional estado->clase(s), admite multiples clases separadas por espacio.
@@ -266,9 +285,12 @@
 
         /**
          * Cambia el estado visual del componente y opcionalmente renderiza template.
+         *
+         * El cambio puede ser cancelado por listeners de `before.plugin.uiState`.
+         *
          * @param {string} state Estado objetivo.
          * @param {Object} [payload={}] Datos opcionales para template/evento.
-         * @returns {boolean}
+         * @returns {boolean} `true` cuando el estado se aplica; `false` si se cancela o es invalido.
          */
         setState(state, payload = {}) {
             if (typeof state !== 'string' || !state.trim()) return false;
@@ -324,6 +346,9 @@
 
         /**
          * Restaura HTML y estado base del componente.
+         *
+         * Tambien limpia clases de estado y re-habilita interaccion interna.
+         *
          * @returns {void}
          */
         restore() {
@@ -361,7 +386,7 @@
         /**
          * Inicializa o reutiliza una instancia de UIState para un host.
          * @param {HTMLElement} element Elemento host.
-         * @param {Object} [options={}] Opciones de inicializacion.
+         * @param {Object} [options={}] Opciones de configuración de la instancia.
          * @returns {UIState}
          */
         static init(element, options = {}) {
@@ -424,6 +449,12 @@
         }
     }
 
+    /**
+     * Delega cambios de estado declarativos desde triggers `data-ui-state-trigger`.
+     *
+     * @param {MouseEvent} evt Evento click delegado en documento.
+     * @returns {void}
+     */
     const onTriggerClick = (evt) => {
         const trigger = evt.target.closest(SELECTOR_TRIGGER);
         if (!(trigger instanceof HTMLElement)) return;
@@ -454,6 +485,11 @@
         instance.setState(nextState, payload);
     };
 
+    /**
+     * Inicializa el plugin automaticamente y activa observacion de cambios en el DOM.
+     *
+     * @returns {void}
+     */
     const startAutoInit = () => {
         UIState.initAll(document);
 

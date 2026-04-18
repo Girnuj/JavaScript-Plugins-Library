@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para remover elementos HTML de una lista o colección.
  * @version 3.0
  * @since 2026
@@ -54,6 +54,11 @@
 
 	/**
 	 * Clase principal del plugin ItemRemover.
+	 *
+	 * Flujo:
+	 * 1. Resuelve elemento objetivo con `data-remove-target`.
+	 * 2. Intercepta click del trigger.
+	 * 3. Elimina el nodo objetivo del DOM.
 	 * @class ItemRemover
 	 */
 	class ItemRemover {
@@ -80,6 +85,7 @@
 
 		/**
 		 * Vincula el evento de clic al elemento a remover.
+		 * @returns {void}
 		 */
 		bind() {
 			if (this.isBound) return;
@@ -89,6 +95,7 @@
 
 		/**
 		 * Desmonta la instancia y libera sus listeners.
+		 * @returns {void}
 		 */
 		destroy() {
 			if (!this.isBound) return;	
@@ -100,6 +107,7 @@
 		/**
 		 * Maneja el evento click para remover el elemento configurado.
 		 * @param {MouseEvent} evt - Evento click.
+		 * @returns {void}
 		 */
 		handleClick(evt) {
 			evt.preventDefault();
@@ -108,6 +116,12 @@
 			target.remove();
 		}
 
+		/**
+		 * Inicializa (o reutiliza) una instancia del plugin.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @returns {ItemRemover}
+		 */
 		static init(element, options = {}) {
 			if (!(element instanceof HTMLElement)) {
 				throw new Error('Error: ItemRemover.init requiere un HTMLElement.');
@@ -125,11 +139,21 @@
 			return instance;
 		}
 
+		/**
+		 * Obtiene la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {ItemRemover|null}
+		 */
 		static getInstance(element) {
 			if (!(element instanceof HTMLElement)) return null;	
 			return INSTANCES.get(element) || null;
 		}
 
+		/**
+		 * Destruye la instancia asociada a un trigger.
+		 * @param {HTMLElement} element Elemento trigger.
+		 * @returns {boolean}
+		 */
 		static destroy(element) {
 			const instance = ItemRemover.getInstance(element);
 			if (!instance) return false;
@@ -137,10 +161,21 @@
 			return true;
 		}
 
+		/**
+		 * Inicializa todas las coincidencias dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @param {Object} [options={}] Opciones compartidas.
+		 * @returns {ItemRemover[]}
+		 */
 		static initAll(root = document, options = {}) {
 			return getSubjects(root).map((element) => ItemRemover.init(element, options));
 		}
 
+		/**
+		 * Destruye todas las instancias encontradas dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @returns {number}
+		 */
 		static destroyAll(root = document) {
 			return getSubjects(root).reduce((destroyedCount, element) => {
 				return ItemRemover.destroy(element) ? destroyedCount + 1 : destroyedCount;
@@ -148,6 +183,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias y observa cambios del DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		ItemRemover.initAll(document);
 

@@ -48,6 +48,12 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    /**
+     * Divide una cadena de clases CSS en tokens validos.
+     *
+     * @param {string|undefined|null} value Cadena con clases separadas por espacios.
+     * @returns {string[]} Lista de clases limpias.
+     */
     const splitClassTokens = (value) => {
         if (!value || typeof value !== 'string') return [];
         return value
@@ -63,6 +69,13 @@
         return fallback;
     };
 
+    /**
+     * Normaliza el metodo HTTP configurado para envios remotos.
+     *
+     * @param {string|undefined|null} value Metodo crudo.
+     * @param {string} [fallback='POST'] Metodo por defecto.
+     * @returns {string} Metodo en mayusculas.
+     */
     const normalizeMethod = (value, fallback = 'POST') => {
         const method = String(value || fallback).trim().toUpperCase();
         return method || fallback;
@@ -102,6 +115,11 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Inyecta estilos base del toast solo una vez por documento.
+     *
+     * @returns {void}
+     */
     const ensureToastStyles = () => {
         if (document.getElementById(STYLE_TAG_ID)) return;
 
@@ -212,6 +230,7 @@
     };
 
     /**
+     * Opciones publicas para controlar render de toast y envio remoto opcional.
      * @typedef {Object} NotificationPushOptions
      * @property {'success'|'info'|'warning'|'error'} [defaultType='success'] Tipo de toast por defecto.
      * @property {number} [defaultDuration=4200] Duracion por defecto del toast en ms.
@@ -233,16 +252,28 @@
     /**
      * Plugin para disparar notificaciones tipo toast y propagar payloads por atributos data-*.
      *
+     * Flujo resumido:
+     * 1. Construye payload desde atributos y metadatos del trigger.
+     * 2. Emite `before.plugin.notificationPush` (cancelable).
+     * 3. Proyecta datos en receptor, muestra toast y envia request opcional.
+     * 4. Emite eventos finales de shown/sent/error segun resultado.
+     *
      * Capacidades principales:
      * - Construccion de payload dinamico por `data-np-name-*`.
      * - Envio de payload a un receptor del DOM (`data-np-target`).
      * - Render de toast configurable (estilo interno o custom).
      * - Envio opcional al backend via fetch sin cache local.
+     *
+     * @fires before.plugin.notificationPush
+     * @fires shown.plugin.notificationPush
+     * @fires sent.plugin.notificationPush
+     * @fires error.plugin.notificationPush
      */
     class NotificationPush {
         /**
+         * Crea una instancia para disparar notificaciones desde un trigger del DOM.
          * @param {HTMLElement} element Trigger del push (boton, enlace, etc.).
-         * @param {NotificationPushOptions} options Opciones de la instancia.
+         * @param {NotificationPushOptions} options Opciones de configuración de la instancia.
          */
         constructor(element, options) {
             this.subject = element;
@@ -434,6 +465,9 @@
 
         /**
          * Ejecuta el flujo completo de push: hooks, receptor, toast y envio.
+         *
+         * Si `before.plugin.notificationPush` es cancelado, el flujo no continua.
+         *
          * @returns {Promise<void>}
          */
         async run() {
@@ -537,7 +571,7 @@
         /**
          * Inicializa o reutiliza instancia para un trigger.
          * @param {HTMLElement} element Trigger objetivo.
-         * @param {NotificationPushOptions} [options={}] Opciones de inicializacion.
+         * @param {NotificationPushOptions} [options={}] Opciones de configuración de la instancia.
          * @returns {NotificationPush}
          */
         static init(element, options = {}) {
@@ -599,6 +633,11 @@
 
     window.NotificationPush = NotificationPush;
 
+    /**
+     * Inicializa automaticamente todas las instancias presentes en el documento.
+     *
+     * @returns {void}
+     */
     const bootstrap = () => {
         NotificationPush.initAll(document);
     };

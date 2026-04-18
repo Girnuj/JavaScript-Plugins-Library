@@ -75,6 +75,11 @@
 
 	/**
 	 * Clase principal del plugin ImgUploadPreview.
+	 *
+	 * Flujo:
+	 * 1. Escucha cambios de archivo en el input.
+	 * 2. Valida tipo MIME y tamaño máximo.
+	 * 3. Renderiza previsualización en el `<img>` target.
 	 * @class ImgUploadPreview
 	 */
 	class ImgUploadPreview {
@@ -93,6 +98,7 @@
 
 		/**
 		 * Vincula el evento de cambio al input para mostrar la previsualización.
+		 * @returns {void}
 		 */
 		bind() {
 			if (this.isBound) return;
@@ -104,6 +110,7 @@
 		 * Desmonta la instancia y libera sus listeners.
 		 * @param {Object} [options] - Configuración del desmontaje.
 		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar la imagen actual.
+		 * @returns {void}
 		 */
 		destroy(options = {}) {
 			if (!this.isBound) return;
@@ -120,6 +127,7 @@
 
 		/**
 		 * Limpia la vista previa actual.
+		 * @returns {void}
 		 */
 		clearPreview() {
 			clearImage(this.target);
@@ -128,6 +136,7 @@
 		/**
 		 * Maneja el cambio de archivo en el input.
 		 * @param {Event} evt - Evento change del input.
+		 * @returns {void}
 		 */
 		handleChange(evt) {
 			const input = evt.target
@@ -165,6 +174,12 @@
 			reader.readAsDataURL(file);
 		}
 
+		/**
+		 * Inicializa (o reutiliza) una instancia del plugin.
+		 * @param {HTMLInputElement} element Input file objetivo.
+		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @returns {ImgUploadPreview}
+		 */
 		static init(element, options = {}) {
 			if (!(element instanceof HTMLInputElement)) {
 				throw new Error('Error: ImgUploadPreview.init requiere un <input>.');
@@ -180,11 +195,22 @@
 			return instance;
 		}
 
+		/**
+		 * Obtiene la instancia asociada a un input file.
+		 * @param {HTMLInputElement} element Input file objetivo.
+		 * @returns {ImgUploadPreview|null}
+		 */
 		static getInstance(element) {
 			if (!(element instanceof HTMLInputElement)) return null;
 			return INSTANCES.get(element) || null;
 		}
 
+		/**
+		 * Destruye la instancia asociada a un input file.
+		 * @param {HTMLInputElement} element Input file objetivo.
+		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @returns {boolean}
+		 */
 		static destroy(element, options = {}) {
 			const instance = ImgUploadPreview.getInstance(element);
 			if (!instance) return false;
@@ -192,10 +218,21 @@
 			return true;
 		}
 
+		/**
+		 * Inicializa todas las coincidencias dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @returns {ImgUploadPreview[]}
+		 */
 		static initAll(root = document) {
 			return getSubjects(root).map((element) => ImgUploadPreview.init(element));
 		}
 
+		/**
+		 * Destruye todas las instancias encontradas dentro de un root.
+		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @returns {number}
+		 */
 		static destroyAll(root = document, options = {}) {
 			return getSubjects(root).reduce((destroyedCount, element) => {
 				return ImgUploadPreview.destroy(element, options) ? destroyedCount + 1 : destroyedCount;
@@ -203,6 +240,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias y observa cambios del DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		ImgUploadPreview.initAll(document);
 

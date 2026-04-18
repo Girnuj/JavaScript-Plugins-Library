@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para manejar modales de manera consistente.
  * @version 3.0
  * @since 2026
@@ -43,10 +43,10 @@
             , showValue = parseBoolean(element.dataset.modalShow)
             , options = {};
 
-        if (staticValue !== undefined) options.static = staticValue;
-        if (focusValue !== undefined) options.focus = focusValue;
-        if (keyboardValue !== undefined) options.keyboard = keyboardValue;
-        if (showValue !== undefined) options.show = showValue;
+        staticValue !== undefined && (options.static = staticValue);
+        focusValue !== undefined && (options.focus = focusValue);
+        keyboardValue !== undefined && (options.keyboard = keyboardValue);
+        showValue !== undefined && (options.show = showValue);
 
         return options;
     };
@@ -72,6 +72,11 @@
         }));
     };
 
+    /**
+     * Procesa nodos removidos y destruye instancias de modal huérfanas.
+     *
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -88,7 +93,16 @@
 
     /**
      * Gestiona la apertura, cierre y alternancia de un modal usando atributos HTML.
+     *
+     * Flujo resumido:
+     * 1. Se inicializa por data-attributes o por toggle declarativo.
+     * 2. Controla apertura/cierre con click, backdrop y teclado.
+     * 3. Gestiona foco para accesibilidad al abrir.
+     * 4. Emite eventos de ciclo para integraciones externas.
+     *
      * @class Modal
+     * @fires shown.plugin.modal
+     * @fires hidden.plugin.modal
      */
     class Modal {
         /**
@@ -342,6 +356,12 @@
         }
     }
 
+    /**
+     * Maneja toggles declarativos (`data-modal="toggle"`) para abrir/cerrar modales.
+     *
+     * @param {MouseEvent} evt Evento click delegado.
+     * @returns {void}
+     */
     const handleToggleClick = (evt) => {
         const toggle = evt.target.closest(SELECTOR_MODAL_TOGGLE);
         if (!(toggle instanceof HTMLElement)) return;
@@ -362,6 +382,11 @@
         instance.toggle(toggle);
     };
 
+    /**
+     * Inicializa modales automaticamente y activa observacion de altas/bajas en DOM.
+     *
+     * @returns {void}
+     */
     const startAutoInit = () => {
         Modal.initAll(document);
         document.addEventListener('click', handleToggleClick);

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para transformar un modal en un formulario por pasos.
  * @version 3.0
  * @since 2026
@@ -65,6 +65,12 @@
         return method || fallback;
     };
 
+    /**
+     * Resuelve metodos HTTP permitidos para submit de pasos.
+     *
+    * @param {Object} options Opciones de configuración de la instancia.
+     * @returns {string[]} Lista normalizada de metodos permitidos.
+     */
     const getAllowedMethods = (options) => {
         if (!options || !Array.isArray(options.allowedSubmitMethods)) return ['GET', 'POST'];
         const normalized = options.allowedSubmitMethods
@@ -207,26 +213,37 @@
         queueMicrotask(flushPendingRemovals);
     };
 
+    /**
+     * Extrae opciones declarativas (`data-dialog-*`) para el modal de pasos.
+     *
+     * @param {HTMLElement} element Contenedor del plugin.
+     * @returns {Object} Opciones parciales obtenidas desde dataset.
+     */
     const getOptionsFromData = (element) => {
         const reloadOnNoContent = parseBoolean(element.dataset.dialogReloadOnNoContent)
             , options = {};
 
-        if (reloadOnNoContent !== undefined) {
-            options.reloadOnNoContent = reloadOnNoContent;
-        }
+        reloadOnNoContent !== undefined && (options.reloadOnNoContent = reloadOnNoContent);
 
         return options;
     };
 
     /**
      * Gestiona un modal de pasos con carga remota de HTML y submit via fetch.
+     *
+     * Flujo resumido:
+     * 1. Al mostrarse el modal, obtiene y renderiza el primer paso.
+     * 2. Intercepta submit de formularios internos para cargar el siguiente paso.
+     * 3. Maneja respuestas por estado HTTP (200/201/204/400/418/fallback).
+     * 4. Al ocultarse, limpia contenido temporal del contenedor de pasos.
+     *
      * @class ModalSteps
      */
     class ModalSteps {
         /**
          * Crea una instancia del plugin sobre un modal.
          * @param {HTMLElement} element Elemento modal sujeto.
-         * @param {Object} options Opciones de configuracion.
+         * @param {Object} options Opciones de configuración de la instancia.
          */
         constructor(element, options) {
             this.subject = element;
@@ -302,7 +319,9 @@
 
         /**
          * Solicita el HTML de un step remoto y lo renderiza en el modal.
+         *
          * @param {string} url URL del step a cargar.
+         * @param {RequestInit} [requestInit={}] Configuracion fetch opcional.
          * @returns {Promise<void>}
          */
         async requestAndRenderHtml(url, requestInit = {}) {
@@ -441,6 +460,9 @@
 
         /**
          * Maneja el evento de apertura del modal y resuelve carga del primer step.
+         *
+         * Soporta tres fuentes para el primer paso: callback, detalle del evento o `data-dialog-src`.
+         *
          * @param {Event|CustomEvent} evt Evento de apertura del modal.
          * @returns {Promise<void>}
          */
@@ -598,7 +620,7 @@
         /**
          * Inicializa (o reutiliza) una instancia para un modal.
          * @param {HTMLElement} element Elemento modal.
-         * @param {Object} [options={}] Opciones de inicializacion.
+         * @param {Object} [options={}] Opciones de configuración de la instancia.
          * @returns {ModalSteps}
          */
         static init(element, options = {}) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Plugin nativo para selects dependientes (parent-child) con carga dinamica via fetch.
  * @version 3.0
  * @since 2026
@@ -71,6 +71,12 @@
 		element.dispatchEvent(new Event('change', { bubbles: true }));
 	};
 
+	/**
+	 * Obtiene el valor actual de un select, soportando modo simple y multiple.
+	 *
+	 * @param {HTMLSelectElement} selectElement Select a inspeccionar.
+	 * @returns {string|string[]|null} Valor actual o `null` cuando no hay seleccion.
+	 */
 	const getSelectCurrentValue = (selectElement) => {
 		if (selectElement.multiple) {
 			const selectedValues = Array.from(selectElement.selectedOptions).map((option) => option.value);
@@ -106,17 +112,19 @@
 		} = element.dataset;
 
 		const dataOptions = {};
-		if (childSelect) dataOptions.childSelectSelector = childSelect;
-		if (childrenUrl) dataOptions.childrenUrl = childrenUrl;
-		if (valueProperty) dataOptions.valuePropertyName = valueProperty;
-		if (textProperty) dataOptions.textPropertyName = textProperty;
-		if (groupOptionsProperty) dataOptions.groupOptionsPropertyName = groupOptionsProperty;
-		if (groupTextProperty) dataOptions.groupTextPropertyName = groupTextProperty;
-		if (grouped) dataOptions.grouped = grouped;
-		if (emptyText) dataOptions.emptyValueText = emptyText;
-		if (autoSelectSingle) dataOptions.autoSelectWhenSingle = autoSelectSingle;
-		if (disableWhenEmpty) dataOptions.disableWhenEmpty = disableWhenEmpty;
-		if (loadingClass) dataOptions.loadingClass = loadingClass;
+
+		childSelect && (dataOptions.childSelectSelector = childSelect);
+		childrenUrl && (dataOptions.childrenUrl = childrenUrl);
+		valueProperty && (dataOptions.valuePropertyName = valueProperty);
+		textProperty && (dataOptions.textPropertyName = textProperty);
+		groupOptionsProperty && (dataOptions.groupOptionsPropertyName = groupOptionsProperty);
+		groupTextProperty && (dataOptions.groupTextPropertyName = groupTextProperty);
+		grouped && (dataOptions.grouped = grouped);
+		emptyText && (dataOptions.emptyValueText = emptyText);
+		autoSelectSingle && (dataOptions.autoSelectWhenSingle = autoSelectSingle);
+		disableWhenEmpty && (dataOptions.disableWhenEmpty = disableWhenEmpty);
+		loadingClass && (dataOptions.loadingClass = loadingClass);
+
 		return dataOptions;
 	};
 
@@ -162,13 +170,19 @@
 
 	/**
 	 * Maneja la relacion parent-child entre selects con carga remota de opciones.
+	 *
+	 * Flujo resumido:
+	 * 1. Escucha cambios del select padre.
+	 * 2. Solicita opciones del hijo al endpoint configurado.
+	 * 3. Renderiza opciones, conserva valor cuando aplica y sincroniza estado disabled.
+	 * 4. Persiste ultimo valor del hijo para escenarios de recarga dependiente.
 	 * @class ChildSelect
 	 */
 	class ChildSelect {
 		/**
 		 * Crea una instancia del plugin para un select padre.
 		 * @param {HTMLSelectElement} element - Select padre que dispara la carga.
-		 * @param {Object} options - Opciones de configuracion finales.
+		 * @param {Object} options - Opciones de configuración de la instancia.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -220,6 +234,12 @@
 			triggerChange(this.target);
 		}
 
+		/**
+		 * Guarda la respuesta JSON en una propiedad data-* del select hijo si esta configurado.
+		 *
+		 * @param {Array|Object|null} data Respuesta recibida del endpoint.
+		 * @returns {void}
+		 */
 		setResponseProperty(data) {
 			if (!this.target) return;
 			if (typeof this.options.responseObjectToChildProperty !== 'string') return;
@@ -228,16 +248,33 @@
 			this.target.dataset[this.options.responseObjectToChildProperty] = JSON.stringify(data);
 		}
 
+		/**
+		 * Agrega clase de carga al select hijo mientras se consulta el endpoint.
+		 *
+		 * @returns {void}
+		 */
 		addLoadingClass() {
 			if (!this.target || !this.options.loadingClass) return;
 			this.target.classList.add(this.options.loadingClass);
 		}
 
+		/**
+		 * Quita clase de carga del select hijo al finalizar la consulta.
+		 *
+		 * @returns {void}
+		 */
 		removeLoadingClass() {
 			if (!this.target || !this.options.loadingClass) return;
 			this.target.classList.remove(this.options.loadingClass);
 		}
 
+		/**
+		 * Compara valor(es) entre opcion candidata y valor actual del hijo.
+		 *
+		 * @param {string|string[]} childValue Valor de opcion candidata.
+		 * @param {string|string[]} currentValue Valor actual del select hijo.
+		 * @returns {boolean}
+		 */
 		isSameValue(childValue, currentValue) {
 			if (Array.isArray(childValue) && Array.isArray(currentValue)) {
 				return childValue.some((value) => currentValue.includes(String(value)));
@@ -546,6 +583,11 @@
 		}
 	}
 
+	/**
+	 * Inicializa automaticamente instancias del plugin y observa cambios en el DOM.
+	 *
+	 * @returns {void}
+	 */
 	const startAutoInit = () => {
 		ChildSelect.initAll(document);
 
@@ -566,8 +608,8 @@
 
 		const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
 		if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-			const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim();
-			const observeRootElement = document.querySelector('[data-pp-observe-root-child-select]');
+			const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
+				, observeRootElement = document.querySelector('[data-pp-observe-root-child-select]');
 			let observeRoot = observeRootElement || document.body || document.documentElement;
 
 			if (observeRootSelector && !observeRootElement) {
