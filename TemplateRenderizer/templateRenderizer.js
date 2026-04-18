@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Renderizador de plantillas simple para reemplazo de variables en HTML.
  * @version 3.0
  * @since 2026
@@ -7,6 +7,13 @@
  */
 (function () {
 	'use strict';
+
+	/**
+	 * Opciones de configuracion de TemplateRenderizer.
+	 * @typedef {Object} TemplateRenderizerOptions
+	 * @property {string} templateSelector Selector CSS del nodo plantilla.
+	 * @property {string[]} [propertiesNames] Lista explicita de placeholders a reemplazar.
+	 */
 
 	/**
 	 * Expresión regular para extraer nombres de propiedades en la plantilla.
@@ -54,9 +61,7 @@
 	class TemplateRenderizer {
 		/**
 		 * Crea una instancia de TemplateRenderizer.
-		 * @param {Object} options - Opciones de configuración.
-		 * @param {string} options.templateSelector - Selector CSS para la plantilla.
-		 * @param {string[]} [options.propertiesNames] - Lista opcional de nombres de propiedades a reemplazar.
+		 * @param {TemplateRenderizerOptions} options - Opciones de configuración.
 		 */
 		constructor(options) {
 			const template = document.querySelector(options.templateSelector);
@@ -88,7 +93,7 @@
 
 		/**
 		 * Renderiza la plantilla con los datos proporcionados.
-		 * @param {Object} data - Objeto con los datos a reemplazar en la plantilla.
+		 * @param {Object<string, any>} data - Objeto con los datos a reemplazar en la plantilla.
 		 * @returns {string} HTML renderizado.
 		 */
 		render(data) {
@@ -102,7 +107,10 @@
 		}
 	}
 
-	// Exponer al scope global
+	/**
+	 * API publica del renderizador expuesta a `window`.
+	 * @type {typeof TemplateRenderizer}
+	 */
 	window.templateRenderizer = TemplateRenderizer;
 
 })();

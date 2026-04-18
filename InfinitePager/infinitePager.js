@@ -8,10 +8,26 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de triggers para paginacion incremental.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-role="infinite-pager"]'
+        /**
+         * Registro de instancias por trigger.
+         * @type {WeakMap<HTMLElement, InfinitePager>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults del plugin InfinitePager.
+     * @type {Object}
+     */
     const INFINITE_PAGER_DEFAULTS = Object.freeze({
         endpoint: '',
         method: 'GET',
@@ -44,6 +60,11 @@
         onEnd: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor fuente.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -54,6 +75,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte valores numericos con fallback.
+     * @param {unknown} value Valor crudo.
+     * @param {number} [fallback=0] Valor por defecto.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -90,6 +117,11 @@
         return method;
     };
 
+    /**
+     * Normaliza modo de activacion del pager (`button` o `scroll`).
+     * @param {unknown} value Valor configurado.
+     * @returns {'button'|'scroll'}
+     */
     const normalizeMode = (value) => {
         const mode = String(value || '').trim().toLowerCase() || INFINITE_PAGER_DEFAULTS.mode;
         if (!['button', 'scroll'].includes(mode)) {
@@ -98,6 +130,11 @@
         return mode;
     };
 
+    /**
+     * Normaliza modo de parseo de respuesta remota.
+     * @param {unknown} value Valor configurado.
+     * @returns {'auto'|'html'|'json'}
+     */
     const normalizeResponseMode = (value) => {
         const mode = String(value || '').trim().toLowerCase() || INFINITE_PAGER_DEFAULTS.responseMode;
         if (!['auto', 'html', 'json'].includes(mode)) {
@@ -106,6 +143,12 @@
         return mode;
     };
 
+    /**
+     * Resuelve valores por path anidado (ej: `data.items`).
+     * @param {Object<string, any>} obj Objeto base.
+     * @param {string} path Ruta separada por punto.
+     * @returns {*}
+     */
     const resolvePath = (obj, path) => {
         if (!obj || typeof obj !== 'object') return undefined;
         if (!path || typeof path !== 'string') return undefined;
@@ -116,6 +159,11 @@
         }, obj);
     };
 
+    /**
+     * Escapa HTML para render seguro de valores dinamicos.
+     * @param {unknown} value Valor de entrada.
+     * @returns {string}
+     */
     const escapeHtml = (value) => {
         return String(value || '')
             .replace(/&/g, '&amp;')
@@ -125,6 +173,11 @@
             .replace(/'/g, '&#039;');
     };
 
+    /**
+     * Obtiene triggers compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz de busqueda.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -139,6 +192,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -148,6 +205,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);

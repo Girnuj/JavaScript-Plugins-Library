@@ -8,11 +8,31 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de formularios con validacion extendida.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = 'form[data-form-validate]'
+        /**
+         * Registro de instancias por formulario.
+         * @type {WeakMap<HTMLFormElement, FormValidate>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set()
+        /**
+         * Reglas custom registradas globalmente.
+         * @type {Map<string, Function>}
+         */
         , CUSTOM_RULES = new Map();
 
+    /**
+     * Defaults de configuracion de FormValidate.
+     * @type {Object}
+     */
     const FORM_VALIDATE_DEFAULTS = Object.freeze({
         invalidClass: 'is-invalid',
         validClass: 'is-valid',
@@ -25,6 +45,11 @@
         afterValidate: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor fuente.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -34,6 +59,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte valor numerico con fallback seguro.
+     * @param {unknown} value Valor crudo.
+     * @param {number} [fallback=0] Valor de respaldo.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -62,6 +93,11 @@
             .filter(Boolean);
     };
 
+    /**
+     * Convierte identificadores a formato kebab-case para atributos data-*.
+     * @param {string} value Cadena de entrada.
+     * @returns {string}
+     */
     const toKebabCase = (value) => {
         return String(value || '')
             .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
@@ -70,6 +106,11 @@
             .trim();
     };
 
+    /**
+     * Obtiene formularios compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLFormElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -84,6 +125,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -93,6 +138,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);

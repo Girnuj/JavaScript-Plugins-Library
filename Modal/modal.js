@@ -8,18 +8,42 @@
 (function () {
     'use strict';
 
+    /**
+     * Nombre estandar de tecla para cierre por teclado.
+     * @type {string}
+     */
     const ESCAPE_KEY = 'Escape'
+        /** @type {string} */
         , CLASS_NAME_OPENED = 'modal-opened'
+        /** @type {string} */
         , SELECTOR_MODAL_SUBJECT = '[role="dialog"],dialog,[data-role="modal"]'
+        /** @type {string} */
         , SELECTOR_MODAL_BACKDROP = '[data-modal="backdrop"]'
+        /** @type {string} */
         , SELECTOR_MODAL_TOGGLE = '[data-modal="toggle"]'
+        /** @type {string} */
         , SELECTOR_MODAL_TOGGLE_TARGET = 'data-modal-target'
+        /** @type {string} */
         , SELECTOR_MODAL_DISMISS = '[data-modal="dismiss"]'
+        /** @type {string} */
         , EVENT_HIDDEN = 'hidden.plugin.modal'
+        /** @type {string} */
         , EVENT_SHOWN = 'shown.plugin.modal'
+        /**
+         * Registro de instancias por modal.
+         * @type {WeakMap<HTMLElement, Modal>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults del plugin Modal.
+     * @type {Object}
+     */
     const MODAL_DEFAULTS = Object.freeze({
         keyboard: true,
         focus: true,
@@ -27,6 +51,11 @@
         show: false,
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor crudo.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -36,6 +65,11 @@
         return undefined;
     };
 
+    /**
+     * Lee opciones `data-modal-*` del elemento sujeto.
+     * @param {HTMLElement} element Elemento modal.
+     * @returns {Object}
+     */
     const getOptionsFromData = (element) => {
         const staticValue = parseBoolean(element.dataset.modalStatic)
             , focusValue = parseBoolean(element.dataset.modalFocus)
@@ -51,6 +85,11 @@
         return options;
     };
 
+    /**
+     * Obtiene modales compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -65,6 +104,13 @@
         return subjects;
     };
 
+    /**
+     * Emite un CustomEvent con detalle de elemento relacionado.
+     * @param {HTMLElement} element Elemento emisor.
+     * @param {string} eventName Nombre del evento.
+     * @param {EventTarget|HTMLElement|null} relatedTarget Elemento relacionado.
+     * @returns {void}
+     */
     const raiseCustomEvent = (element, eventName, relatedTarget) => {
         element.dispatchEvent(new CustomEvent(eventName, {
             bubbles: true,

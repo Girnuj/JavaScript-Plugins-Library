@@ -8,10 +8,26 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de elementos con confirmacion.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-confirm-action]'
+        /**
+         * Registro de instancias por elemento.
+         * @type {WeakMap<HTMLElement, ConfirmAction>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults de configuracion de ConfirmAction.
+     * @type {Object}
+     */
     const CONFIRM_ACTION_DEFAULTS = Object.freeze({
         message: 'Estas seguro de continuar?',
         title: '',

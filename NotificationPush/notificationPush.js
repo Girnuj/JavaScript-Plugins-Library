@@ -8,12 +8,30 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de triggers para NotificationPush.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-notification-push]'
+        /** @type {string} */
         , TOAST_CONTAINER_ID = 'np-toast-container'
+        /** @type {string} */
         , STYLE_TAG_ID = 'np-toast-style'
+        /**
+         * Registro de instancias por trigger.
+         * @type {WeakMap<HTMLElement, NotificationPush>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults del plugin NotificationPush.
+     * @type {Object}
+     */
     const NOTIFICATION_PUSH_DEFAULTS = Object.freeze({
         defaultType: 'success',
         defaultDuration: 4200,
@@ -34,6 +52,11 @@
         onError: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor crudo.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -43,6 +66,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte valores numericos con fallback seguro.
+     * @param {unknown} value Valor de entrada.
+     * @param {number} [fallback=0] Fallback numerico.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -87,6 +116,11 @@
         });
     };
 
+    /**
+     * Obtiene triggers compatibles en un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz de busqueda.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -101,6 +135,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -110,6 +148,11 @@
         });
     };
 
+    /**
+     * Agenda verificacion diferida de remocion de nodos.
+     * @param {Element} node Nodo removido.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);
@@ -168,6 +211,11 @@
         return container;
     };
 
+    /**
+     * Parsea JSON de headers declarados por atributo.
+     * @param {string|undefined|null} value JSON candidato.
+     * @returns {Object<string, string>|null}
+     */
     const parseHeadersJson = (value) => {
         if (!value || typeof value !== 'string') return null;
         try {
@@ -178,6 +226,11 @@
         }
     };
 
+    /**
+     * Lee opciones declarativas (`data-np-*`) del trigger.
+     * @param {HTMLElement} element Trigger del plugin.
+     * @returns {Object}
+     */
     const getOptionsFromData = (element) => {
         const options = {}
             , showToast = parseBoolean(element.dataset.npShowToast)
@@ -210,6 +263,11 @@
         return options;
     };
 
+    /**
+     * Construye payload dinamico desde atributos `data-np-name-*`.
+     * @param {HTMLElement} element Trigger fuente.
+     * @returns {Object<string, string>}
+     */
     const getDynamicNamePayload = (element) => {
         const payload = {};
 

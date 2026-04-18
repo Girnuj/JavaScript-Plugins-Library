@@ -8,13 +8,41 @@
 (function () {
     'use strict';
 
+    /**
+     * Clase CSS aplicada al formulario durante loading.
+     * @type {string}
+     */
     const CLASS_NAME_LOADING = 'is-loading'
+        /**
+         * Clase CSS para marcar campos con error.
+         * @type {string}
+         */
         , CLASS_NAME_FIELD_ERROR = 'has-error'
+        /**
+         * Clase CSS para contenedores de mensaje de error por campo.
+         * @type {string}
+         */
         , CLASS_NAME_ERROR_MESSAGE = 'form-error-message'
+        /**
+         * Selector declarativo de formularios gestionados por el plugin.
+         * @type {string}
+         */
         , SELECTOR_SUBJECT = 'form[data-form-request]'
+        /**
+         * Registro de instancias activas por formulario.
+         * @type {WeakMap<HTMLFormElement, FormRequest>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults de configuracion de FormRequest.
+     * @type {Object}
+     */
     const FORM_REQUEST_DEFAULTS = Object.freeze({
         sameOrigin: true,
         allowedMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -38,6 +66,11 @@
         onComplete: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor crudo.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -47,6 +80,12 @@
         return undefined;
     };
 
+    /**
+     * Normaliza metodos HTTP en mayusculas.
+     * @param {unknown} value Metodo fuente.
+     * @param {string} [fallback='POST'] Metodo fallback.
+     * @returns {string}
+     */
     const normalizeMethod = (value, fallback = 'POST') => {
         const method = String(value || fallback).trim().toUpperCase();
         return method || fallback;
@@ -106,12 +145,23 @@
         }
     };
 
+    /**
+     * Espera asincrona utilitaria para debounce/reintentos.
+     * @param {number} ms Milisegundos.
+     * @returns {Promise<void>}
+     */
     const wait = (ms) => {
         return new Promise((resolve) => {
             setTimeout(resolve, ms);
         });
     };
 
+    /**
+     * Valida URL y restringe origen segun politica sameOrigin.
+     * @param {string} rawUrl URL declarada en el formulario.
+     * @param {boolean} strictSameOrigin Rechaza origen externo cuando es true.
+     * @returns {URL}
+     */
     const toSafeUrl = (rawUrl, strictSameOrigin) => {
         const url = new URL(rawUrl, window.location.href)
             , protocol = url.protocol.toLowerCase();
@@ -127,6 +177,11 @@
         return url;
     };
 
+    /**
+     * Parsea cuerpo de respuesta en modo JSON o texto.
+     * @param {Response} response Respuesta fetch.
+     * @returns {Promise<{isJson:boolean,data:any,text:string}>}
+     */
     const parseResponseBody = async (response) => {
         const contentType = response.headers.get('Content-Type') || ''
             , isJson = contentType.toLowerCase().includes('json');
@@ -140,6 +195,11 @@
         return { isJson, data: null, text };
     };
 
+    /**
+     * Obtiene formularios compatibles en un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz de busqueda.
+     * @returns {HTMLFormElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -154,6 +214,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias cuyos nodos fueron removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -163,6 +227,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para evitar destroy en reubicaciones temporales.
+     * @param {Element} node Nodo removido en mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);

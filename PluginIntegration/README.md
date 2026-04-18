@@ -5,6 +5,9 @@ Este directorio contiene un ejemplo practico de como orquestar varios plugins en
 Archivo principal:
 - test-plugin-integration.html
 
+Archivo adicional (resiliencia de red):
+- test-plugin-integration-offline-action-queue.html
+
 ## Plugins combinados
 
 - Modal: contenedor de UI para flujos de confirmacion o captura de datos.

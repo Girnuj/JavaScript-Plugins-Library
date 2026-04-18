@@ -8,23 +8,55 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de inputs con preview de imagen.
+	 * @type {string}
+	 */
 	const SELECTOR_IMG_UPLOAD = 'input[data-img-upload="input"], input[data-img-upload-preview-target]'
+		/**
+		 * Defaults de configuracion para ImgUploadPreview.
+		 * @type {Object}
+		 */
 		, IMG_UPLOAD_PREVIEW_DEFAULTS = Object.freeze({
 			targetItemSelector: '',
 			allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
 			maxFileSize: 2 * 1024 * 1024, //2MB
 		})
+		/**
+		 * Registro de instancias por input file.
+		 * @type {WeakMap<HTMLInputElement, ImgUploadPreview>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Resuelve elemento target a partir de selector CSS.
+	 * @param {string} selector Selector CSS.
+	 * @returns {HTMLImageElement|null}
+	 */
 	const getTargetElement = (selector) => selector ? document.querySelector(selector) : null;
 
+	/**
+	 * Limpia la imagen actual del target.
+	 * @param {HTMLImageElement|null} target Elemento img destino.
+	 * @returns {void}
+	 */
 	const clearImage = (target) => {
 		if (target) {
 			target.removeAttribute('src');
 		}
 	};
 
+	/**
+	 * Valida selector target y retorna opciones efectivas de la instancia.
+	 * @param {HTMLInputElement} element Input file trigger.
+	 * @param {Object} [options={}] Overrides por API.
+	 * @returns {Object}
+	 */
 	const getValidatedOptions = (element, options = {}) => {
 		const targetItemSelector = options.targetItemSelector || element.dataset.imgUploadPreviewTarget;
 
@@ -45,6 +77,11 @@
 		return { ...options, targetItemSelector };
 	};
 
+	/**
+	 * Obtiene inputs compatibles dentro de un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLInputElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -59,6 +96,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -68,10 +109,23 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura de instancias.
+	 * @param {Element} node Nodo removido en mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de ImgUploadPreview.
+	 * @typedef {Object} ImgUploadPreviewOptions
+	 * @property {string} targetItemSelector Selector del elemento <img> destino.
+	 * @property {string[]} [allowedMimeTypes=['image/jpeg','image/png','image/webp','image/gif']] MIME types permitidos.
+	 * @property {number} [maxFileSize=2097152] Tamano maximo permitido en bytes.
+	 */
 
 	/**
 	 * Clase principal del plugin ImgUploadPreview.
@@ -86,7 +140,7 @@
 		/**
 		 * Crea una instancia de ImgUploadPreview.
 		 * @param {HTMLInputElement} element - Input file sobre el que se inicializa.
-		 * @param {Object} options - Opciones de configuración del plugin.
+		 * @param {ImgUploadPreviewOptions} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -108,7 +162,7 @@
 
 		/**
 		 * Desmonta la instancia y libera sus listeners.
-		 * @param {Object} [options] - Configuración del desmontaje.
+		 * @param {{clearPreview?: boolean}} [options] - Configuración del desmontaje.
 		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar la imagen actual.
 		 * @returns {void}
 		 */
@@ -177,7 +231,7 @@
 		/**
 		 * Inicializa (o reutiliza) una instancia del plugin.
 		 * @param {HTMLInputElement} element Input file objetivo.
-		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @param {Partial<ImgUploadPreviewOptions>} [options={}] Opciones de inicialización.
 		 * @returns {ImgUploadPreview}
 		 */
 		static init(element, options = {}) {
@@ -208,7 +262,7 @@
 		/**
 		 * Destruye la instancia asociada a un input file.
 		 * @param {HTMLInputElement} element Input file objetivo.
-		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @param {{clearPreview?: boolean}} [options={}] Opciones de destrucción.
 		 * @returns {boolean}
 		 */
 		static destroy(element, options = {}) {
@@ -230,7 +284,7 @@
 		/**
 		 * Destruye todas las instancias encontradas dentro de un root.
 		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
-		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @param {{clearPreview?: boolean}} [options={}] Opciones de destrucción.
 		 * @returns {number}
 		 */
 		static destroyAll(root = document, options = {}) {

@@ -8,14 +8,34 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de triggers que usan RequestState.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-request-state]'
+        /**
+         * Registro de instancias activas por elemento.
+         * @type {WeakMap<HTMLElement, RequestState>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set()
+        /** @type {'idle'} */
         , STATE_IDLE = 'idle'
+        /** @type {'loading'} */
         , STATE_LOADING = 'loading'
+        /** @type {'success'} */
         , STATE_SUCCESS = 'success'
+        /** @type {'error'} */
         , STATE_ERROR = 'error';
 
+    /**
+     * Defaults de configuracion para el ciclo de estados async.
+     * @type {Object}
+     */
     const REQUEST_STATE_DEFAULTS = Object.freeze({
         delayMs: 600,
         autoResetMs: 0,
@@ -48,6 +68,11 @@
         onComplete: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor fuente.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -57,6 +82,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte entrada numerica con fallback.
+     * @param {unknown} value Valor crudo.
+     * @param {number} [fallback=0] Valor por defecto.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -108,12 +139,22 @@
         }
     };
 
+    /**
+     * Espera asincrona utilitaria para delays y reintentos.
+     * @param {number} ms Milisegundos de espera.
+     * @returns {Promise<void>}
+     */
     const wait = (ms) => {
         return new Promise((resolve) => {
             setTimeout(resolve, ms);
         });
     };
 
+    /**
+     * Convierte FormData en objeto plano, preservando arrays y archivos.
+     * @param {FormData} formData FormData de entrada.
+     * @returns {Object<string, any>}
+     */
     const formDataToObject = (formData) => {
         const result = {};
 
@@ -138,6 +179,13 @@
         return result;
     };
 
+    /**
+     * Agrega objetos/arrays anidados como query params.
+     * @param {URLSearchParams} params Objeto de parametros destino.
+     * @param {Object<string, any>} payload Payload a serializar.
+     * @param {string} [keyPrefix=''] Prefijo para claves anidadas.
+     * @returns {void}
+     */
     const appendObjectToSearchParams = (params, payload, keyPrefix = '') => {
         if (!payload || typeof payload !== 'object') return;
 
@@ -169,6 +217,11 @@
         });
     };
 
+    /**
+     * Obtiene elementos compatibles en un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -183,6 +236,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias de nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -192,6 +249,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura de instancias.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);

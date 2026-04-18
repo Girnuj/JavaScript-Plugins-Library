@@ -8,15 +8,36 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de switches amigables.
+	 * @type {string}
+	 */
 	const SELECTOR_ROLE = '[data-role="friendly-switch"]'
+		/**
+		 * Defaults de configuracion de InputSwitchFriendly.
+		 * @type {Object}
+		 */
 		, INPUT_SWITCH_FRIENDLY_DEFAULTS = Object.freeze({
 			targetSelector: null,
 			checkedDisplay: '',
 			uncheckedDisplay: '',
 		})
+		/**
+		 * Registro de instancias por input.
+		 * @type {WeakMap<HTMLInputElement, InputSwitchFriendly>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Lee opciones declarativas `data-friendly-switch-*` desde el input.
+	 * @param {HTMLInputElement} element Input trigger.
+	 * @returns {{checkedDisplay:string|undefined,uncheckedDisplay:string|undefined,targetSelector:string|undefined}}
+	 */
 	const getOptionsFromData = (element) => {
 		const checkedDisplay = element.dataset.friendlySwitchChecked
 			, uncheckedDisplay = element.dataset.friendlySwitchUnchecked
@@ -29,6 +50,11 @@
 		};
 	};
 
+	/**
+	 * Obtiene triggers compatibles dentro de un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLInputElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -43,6 +69,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -52,10 +82,23 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura de instancias.
+	 * @param {Element} node Nodo removido por mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de InputSwitchFriendly.
+	 * @typedef {Object} InputSwitchFriendlyOptions
+	 * @property {string|null} [targetSelector=null] Selector del nodo destino para texto.
+	 * @property {string} [checkedDisplay=''] Texto cuando el switch esta activo.
+	 * @property {string} [uncheckedDisplay=''] Texto cuando el switch esta inactivo.
+	 */
 
 	/**
 	 * Gestiona la sincronizacion entre un switch y un texto objetivo amigable.
@@ -70,7 +113,7 @@
 		/**
 		 * Crea una instancia para un input tipo checkbox/switch.
 		 * @param {HTMLInputElement} element - Input que dispara los cambios.
-		 * @param {Object} options - Configuracion fusionada del plugin.
+		 * @param {InputSwitchFriendlyOptions} options - Configuracion fusionada del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -142,7 +185,7 @@
 		/**
 		 * Inicializa una instancia sobre un input concreto.
 		 * @param {HTMLElement} element - Elemento a inicializar.
-		 * @param {Object} [options={}] - Opciones para sobreescribir data-attributes.
+		 * @param {InputSwitchFriendlyOptions} [options={}] - Opciones para sobreescribir data-attributes.
 		 * @returns {InputSwitchFriendly}
 		 */
 		static init(element, options = {}) {
@@ -186,7 +229,7 @@
 		/**
 		 * Inicializa todas las coincidencias dentro de un contenedor.
 		 * @param {ParentNode|Element|Document} [root=document] - Raiz donde buscar.
-		 * @param {Object} [options={}] - Opciones compartidas para cada instancia.
+		 * @param {InputSwitchFriendlyOptions} [options={}] - Opciones compartidas para cada instancia.
 		 * @returns {InputSwitchFriendly[]}
 		 */
 		static initAll(root = document, options = {}) {

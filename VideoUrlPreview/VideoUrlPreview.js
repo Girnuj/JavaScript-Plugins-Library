@@ -8,21 +8,53 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de inputs para preview de video.
+	 * @type {string}
+	 */
 	const SELECTOR_ROLE = 'input[data-role="video-preview"], input[data-video-preview-target-frame]'
+		/**
+		 * Defaults de configuracion de VideoUrlPreview.
+		 * @type {Object}
+		 */
 		, VIDEO_URL_PREVIEW_DEFAULTS = Object.freeze({
 			targetItemSelector: '',
 		})
+		/**
+		 * Registro de instancias por input.
+		 * @type {WeakMap<HTMLInputElement, VideoUrlPreview>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Resuelve el iframe destino desde selector CSS.
+	 * @param {string} selector Selector configurado.
+	 * @returns {HTMLIFrameElement|null}
+	 */
 	const getTargetElement = (selector) => selector ? document.querySelector(selector) : null;
 
+	/**
+	 * Limpia src del iframe objetivo.
+	 * @param {HTMLIFrameElement|null} target Iframe de preview.
+	 * @returns {void}
+	 */
 	const clearFrame = (target) => {
 		if (target) {
 			target.removeAttribute('src');
 		}
 	};
 
+	/**
+	 * Valida selector target y construye opciones efectivas.
+	 * @param {HTMLInputElement} element Input trigger.
+	 * @param {Object} [options={}] Overrides por API.
+	 * @returns {Object}
+	 */
 	const getValidatedOptions = (element, options = {}) => {
 		const targetItemSelector = options.targetItemSelector || element.dataset.videoPreviewTargetFrame;
 
@@ -43,6 +75,11 @@
 		return { ...options, targetItemSelector };
 	};
 
+	/**
+	 * Obtiene inputs compatibles dentro de un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLInputElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -57,6 +94,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -66,10 +107,21 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura.
+	 * @param {Element} node Nodo removido por mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de VideoUrlPreview.
+	 * @typedef {Object} VideoUrlPreviewOptions
+	 * @property {string} targetItemSelector Selector del iframe destino.
+	 */
 
 	/**
 	 * Clase principal del plugin VideoUrlPreview.
@@ -85,7 +137,7 @@
 		/**
 		 * Crea una instancia de VideoUrlPreview.
 		 * @param {HTMLInputElement} element - Input de texto sobre el que se inicializa.
-		 * @param {Object} options - Opciones de configuración del plugin.
+		 * @param {VideoUrlPreviewOptions} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -153,7 +205,7 @@
 
 		/**
 		 * Desmonta la instancia y libera sus listeners.
-		 * @param {Object} [options] - Configuración del desmontaje.
+		 * @param {{clearPreview?: boolean}} [options] - Configuración del desmontaje.
 		 * @param {boolean} [options.clearPreview=false] - Indica si debe limpiar el iframe actual.
 		 * @returns {void}
 		 */
@@ -220,7 +272,7 @@
 		/**
 		 * Inicializa (o reutiliza) una instancia del plugin.
 		 * @param {HTMLInputElement} element Input objetivo.
-		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @param {Partial<VideoUrlPreviewOptions>} [options={}] Opciones de inicialización.
 		 * @returns {VideoUrlPreview}
 		 */
 		static init(element, options = {}) {
@@ -252,7 +304,7 @@
 		/**
 		 * Destruye la instancia asociada a un input.
 		 * @param {HTMLInputElement} element Input objetivo.
-		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @param {{clearPreview?: boolean}} [options={}] Opciones de destrucción.
 		 * @returns {boolean}
 		 */
 		static destroy(element, options = {}) {
@@ -274,7 +326,7 @@
 		/**
 		 * Destruye todas las instancias encontradas dentro de un root.
 		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
-		 * @param {Object} [options={}] Opciones de destrucción.
+		 * @param {{clearPreview?: boolean}} [options={}] Opciones de destrucción.
 		 * @returns {number}
 		 */
 		static destroyAll(root = document, options = {}) {

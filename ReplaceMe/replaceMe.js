@@ -8,14 +8,35 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de triggers ReplaceMe.
+	 * @type {string}
+	 */
 	const SELECTOR_REPLACE_ME = '[data-role="replace-me"]'
+		/**
+		 * Defaults de configuracion para ReplaceMe.
+		 * @type {Object}
+		 */
 		, REPLACE_ME_DEFAULTS = Object.freeze({
 			replaceSourceUrl: '',
 			requestMethod: 'POST',
 		})
+		/**
+		 * Registro de instancias por trigger.
+		 * @type {WeakMap<HTMLElement, ReplaceMe>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Normaliza y valida metodo HTTP permitido por ReplaceMe.
+	 * @param {unknown} value Metodo solicitado.
+	 * @returns {'GET'|'POST'}
+	 */
 	const getValidatedRequestMethod = (value) => {
 		const requestMethod = `${value || ''}`.trim().toUpperCase() || REPLACE_ME_DEFAULTS.requestMethod;
 
@@ -25,6 +46,11 @@
 		return requestMethod;
 	};
 
+	/**
+	 * Lee opciones declarativas desde dataset (`data-replace-me-*`).
+	 * @param {HTMLElement} element Trigger.
+	 * @returns {{replaceSourceUrl:string|undefined,requestMethod:string|undefined}|Object}
+	 */
 	const getOptionsFromData = (element) => {
 		const replaceSourceUrl = element.dataset.replaceMeSrc
 			, requestMethod = element.dataset.replaceMeMethod;
@@ -36,6 +62,12 @@
 		};
 	};
 
+	/**
+	 * Mezcla y valida opciones efectivas de la instancia.
+	 * @param {HTMLElement} element Trigger del plugin.
+	 * @param {Object} [options={}] Overrides por API.
+	 * @returns {Object}
+	 */
 	const getValidatedOptions = (element, options = {}) => {
 		const mergedOptions = { ...REPLACE_ME_DEFAULTS, ...getOptionsFromData(element), ...options }
 			, { replaceSourceUrl } = mergedOptions;
@@ -47,6 +79,11 @@
 		return mergedOptions;
 	};
 
+	/**
+	 * Obtiene triggers compatibles en un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 		if (root.nodeType === 1 && root.matches(SELECTOR_REPLACE_ME)) {
@@ -59,6 +96,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -68,10 +109,22 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura de instancias.
+	 * @param {Element} node Nodo removido por mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de ReplaceMe.
+	 * @typedef {Object} ReplaceMeOptions
+	 * @property {string} replaceSourceUrl URL del HTML remoto a inyectar.
+	 * @property {'GET'|'POST'} [requestMethod='POST'] Metodo HTTP permitido.
+	 */
 
 	/**
 	 * Clase principal del plugin ReplaceMe.
@@ -86,7 +139,7 @@
 		/**
 		 * Crea una instancia de ReplaceMe.
 		 * @param {HTMLElement} element - Elemento sobre el que se inicializa el plugin.
-		 * @param {Object} options - Opciones de configuración del plugin.
+		 * @param {ReplaceMeOptions} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -151,7 +204,7 @@
 		/**
 		 * Inicializa (o reutiliza) una instancia del plugin.
 		 * @param {HTMLElement} element Elemento trigger.
-		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @param {ReplaceMeOptions} [options={}] Opciones de inicialización.
 		 * @returns {ReplaceMe}
 		 */
 		static init(element, options = {}) {
@@ -197,7 +250,7 @@
 		/**
 		 * Inicializa todas las coincidencias dentro de un root.
 		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
-		 * @param {Object} [options={}] Opciones compartidas.
+		 * @param {ReplaceMeOptions} [options={}] Opciones compartidas.
 		 * @returns {ReplaceMe[]}
 		 */
 		static initAll(root = document, options = {}) {

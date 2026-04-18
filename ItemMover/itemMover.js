@@ -8,16 +8,42 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de triggers de movimiento.
+	 * @type {string}
+	 */
 	const SELECTOR_ROLE = '[data-role="move-item"]'
+		/**
+		 * Defaults de configuracion para ItemMover.
+		 * @type {Object}
+		 */
 		, ITEM_MOVER_DEFAULTS = Object.freeze({
 			targetItemSelector: '',
 			direction: 'next', // 'next' o 'previous'
 		})
+		/**
+		 * Registro de instancias por trigger.
+		 * @type {WeakMap<HTMLElement, ItemMover>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Valida direccion de movimiento soportada por el plugin.
+	 * @param {string} direction Direccion solicitada.
+	 * @returns {boolean}
+	 */
 	const isValidDirection = (direction) => ['next', 'previous'].includes(direction);
 
+	/**
+	 * Lee opciones declarativas desde dataset (`data-move-*`).
+	 * @param {HTMLElement} element Trigger.
+	 * @returns {{targetItemSelector:string,direction:string}}
+	 */
 	const getOptionsFromData = (element) => {
 		return {
 			targetItemSelector: element.dataset.moveTarget || '', // data-move-target
@@ -25,6 +51,11 @@
 		};
 	};
 
+	/**
+	 * Obtiene triggers compatibles en un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -39,6 +70,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -49,10 +84,22 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura de instancias.
+	 * @param {Element} node Nodo removido por mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de ItemMover.
+	 * @typedef {Object} ItemMoverOptions
+	 * @property {string} targetItemSelector Selector del item contenedor a mover.
+	 * @property {'next'|'previous'} [direction='next'] Direccion del intercambio.
+	 */
 
 	/**
 	 * Clase principal del plugin ItemMover.
@@ -68,7 +115,7 @@
 		/**
 		 * Crea una instancia de ItemMover.
 		 * @param {HTMLElement} element - Elemento sobre el que se inicializa el plugin.
-		 * @param {Object} options - Opciones de configuración del plugin.
+		 * @param {ItemMoverOptions} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -159,7 +206,7 @@
 		/**
 		 * Inicializa (o reutiliza) una instancia del plugin.
 		 * @param {HTMLElement} element Elemento trigger.
-		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @param {ItemMoverOptions} [options={}] Opciones de inicialización.
 		 * @returns {ItemMover}
 		 */
 		static init(element, options = {}) {
@@ -211,7 +258,7 @@
 		/**
 		 * Inicializa todas las coincidencias dentro de un root.
 		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
-		 * @param {Object} [options={}] Opciones compartidas.
+		 * @param {ItemMoverOptions} [options={}] Opciones compartidas.
 		 * @returns {ItemMover[]}
 		 */
 		static initAll(root = document, options = {}) {

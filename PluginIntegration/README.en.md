@@ -5,6 +5,9 @@ This directory contains a practical example of how to orchestrate multiple plugi
 Main file:
 - test-plugin-integration.html
 
+Additional file (network resiliency):
+- test-plugin-integration-offline-action-queue.html
+
 ## Combined Plugins
 
 - Modal: UI container for confirmation flows or data capture.

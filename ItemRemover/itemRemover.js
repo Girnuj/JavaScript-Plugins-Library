@@ -8,13 +8,34 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo de triggers de eliminacion.
+	 * @type {string}
+	 */
 	const SELECTOR_ROLE = '[data-role="remove-item"]'
+		/**
+		 * Defaults de configuracion para ItemRemover.
+		 * @type {Object}
+		 */
 		, ITEM_REMOVER_DEFAULTS = Object.freeze({
 			targetItemSelector: '[data-remove-item="item"]',
 		})
+		/**
+		 * Registro de instancias por trigger.
+		 * @type {WeakMap<HTMLElement, ItemRemover>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Lee opciones declarativas desde dataset (`data-remove-*`).
+	 * @param {HTMLElement} element Trigger.
+	 * @returns {{targetItemSelector:string}|Object}
+	 */
 	const getOptionsFromData = (element) => {
 		const targetItemSelector = element.dataset.removeTarget;
 
@@ -24,6 +45,11 @@
 		};
 	};
 
+	/**
+	 * Obtiene triggers compatibles en un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -38,6 +64,10 @@
 		return subjects;
 	};
 
+	/**
+	 * Limpia instancias asociadas a nodos removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -47,10 +77,21 @@
 		});
 	};
 
+	/**
+	 * Agenda chequeo diferido para destruccion segura de instancias.
+	 * @param {Element} node Nodo removido en mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);
 	};
+
+	/**
+	 * Opciones publicas de ItemRemover.
+	 * @typedef {Object} ItemRemoverOptions
+	 * @property {string} [targetItemSelector='[data-remove-item="item"]'] Selector del nodo a eliminar.
+	 */
 
 	/**
 	 * Clase principal del plugin ItemRemover.
@@ -65,7 +106,7 @@
 		/**
 		 * Crea una instancia de ItemRemover.
 		 * @param {HTMLElement} element - Elemento sobre el que se inicializa el plugin.
-		 * @param {Object} options - Opciones de configuración del plugin.
+		 * @param {ItemRemoverOptions} options - Opciones de configuración del plugin.
 		 */
 		constructor(element, options) {
 			this.subject = element;
@@ -119,7 +160,7 @@
 		/**
 		 * Inicializa (o reutiliza) una instancia del plugin.
 		 * @param {HTMLElement} element Elemento trigger.
-		 * @param {Object} [options={}] Opciones de inicialización.
+		 * @param {ItemRemoverOptions} [options={}] Opciones de inicialización.
 		 * @returns {ItemRemover}
 		 */
 		static init(element, options = {}) {
@@ -164,7 +205,7 @@
 		/**
 		 * Inicializa todas las coincidencias dentro de un root.
 		 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
-		 * @param {Object} [options={}] Opciones compartidas.
+		 * @param {ItemRemoverOptions} [options={}] Opciones compartidas.
 		 * @returns {ItemRemover[]}
 		 */
 		static initAll(root = document, options = {}) {

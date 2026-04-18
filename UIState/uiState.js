@@ -8,12 +8,30 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de hosts administrados por UIState.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-ui-state-host]'
+        /** @type {string} */
         , SELECTOR_TRIGGER = '[data-ui-state-trigger]'
+        /** @type {string} */
         , STATE_ATTRIBUTE = 'data-ui-state-current'
+        /**
+         * Registro de instancias por host.
+         * @type {WeakMap<HTMLElement, UIState>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults de configuracion para UIState.
+     * @type {Object}
+     */
     const UI_STATE_DEFAULTS = Object.freeze({
         baseState: 'default',
         classPrefix: 'is-state-',
@@ -26,6 +44,11 @@
         afterRestore: function () { },
     });
 
+    /**
+     * Parsea lista CSV en arreglo de tokens no vacios.
+     * @param {string|undefined|null} value Cadena fuente.
+     * @returns {string[]}
+     */
     const parseList = (value) => {
         if (!value || typeof value !== 'string') return [];
         return value
@@ -34,6 +57,11 @@
             .filter(Boolean);
     };
 
+    /**
+     * Parsea clases CSS separadas por espacio.
+     * @param {string|undefined|null} value Cadena de clases.
+     * @returns {string[]}
+     */
     const parseClassTokens = (value) => {
         if (!value || typeof value !== 'string') return [];
         return value
@@ -43,6 +71,11 @@
             .filter(Boolean);
     };
 
+    /**
+     * Obtiene hosts compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -57,6 +90,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -66,6 +103,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura de instancias.
+     * @param {Element} node Nodo removido en mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);
@@ -87,6 +129,11 @@
         });
     };
 
+    /**
+     * Lee opciones declarativas (`data-ui-state-*`) del host.
+     * @param {HTMLElement} element Host del componente.
+     * @returns {Object}
+     */
     const getOptionsFromData = (element) => {
         const options = {}
             , stateClassMap = {};
@@ -128,6 +175,20 @@
     };
 
     /**
+     * Opciones publicas de UIState.
+     * @typedef {Object} UIStateOptions
+     * @property {string} [baseState='default'] Estado base de restauracion.
+     * @property {string} [classPrefix='is-state-'] Prefijo de clases por estado.
+     * @property {Object<string,string>} [stateClassMap={}] Mapa estado->clase(s).
+     * @property {string[]} [disableOnStates=['loading','disabled']] Estados que bloquean controles interactivos.
+     * @property {string} [interactiveSelector='button, a, input, select, textarea'] Selector de nodos interactivos.
+     * @property {Object<string,(string|Function)>} [templates={}] Templates por estado.
+     * @property {(detail:Object)=>void} [beforeChange] Hook previo al cambio.
+     * @property {(detail:Object)=>void} [afterChange] Hook posterior al cambio.
+     * @property {(detail:Object)=>void} [afterRestore] Hook posterior a restauracion.
+     */
+
+    /**
      * Controlador de estados visuales para un componente de UI.
      *
      * Flujo principal:
@@ -145,7 +206,7 @@
         /**
          * Crea una instancia para administrar transiciones de estado visual en un componente.
          * @param {HTMLElement} element Componente que recibira cambios de estado.
-         * @param {Object} options Opciones de configuración de la instancia.
+         * @param {UIStateOptions} options Opciones de configuración de la instancia.
          * @param {string} [options.baseState='default'] Estado base para restauracion.
          * @param {string} [options.classPrefix='is-state-'] Prefijo para clases por estado.
          * @param {Object<string,string>} [options.stateClassMap={}] Mapa opcional estado->clase(s), admite multiples clases separadas por espacio.

@@ -8,11 +8,31 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo para controles sincronizados con query params.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = '[data-role="query-sync-state"]'
+        /**
+         * Registro de instancias por elemento.
+         * @type {WeakMap<HTMLElement, QuerySyncState>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set()
+        /**
+         * Marcador sentinela para omitir update de URL en flujos internos.
+         * @type {symbol}
+         */
         , NO_UPDATE = Symbol('QSS_NO_UPDATE');
 
+    /**
+     * Defaults del plugin QuerySyncState.
+     * @type {Object}
+     */
     const QUERY_SYNC_STATE_DEFAULTS = Object.freeze({
         key: '',
         type: 'string',
@@ -30,6 +50,11 @@
         onComplete: function () { },
     });
 
+    /**
+     * Normaliza booleanos declarativos.
+     * @param {unknown} value Valor fuente.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -40,6 +65,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte valor numerico con fallback seguro.
+     * @param {unknown} value Valor fuente.
+     * @param {number} [fallback=0] Valor de respaldo.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -68,6 +99,11 @@
         return type;
     };
 
+    /**
+     * Normaliza estrategia de historial (`replace`/`push`).
+     * @param {unknown} value Valor fuente.
+     * @returns {'replace'|'push'}
+     */
     const normalizeHistory = (value) => {
         const mode = String(value || '').trim().toLowerCase() || QUERY_SYNC_STATE_DEFAULTS.history;
         if (!['replace', 'push'].includes(mode)) {
@@ -76,6 +112,11 @@
         return mode;
     };
 
+    /**
+     * Obtiene elementos compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -90,6 +131,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -99,6 +144,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido en mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);
@@ -177,6 +227,12 @@
         }
     };
 
+    /**
+     * Serializa un valor segun el tipo configurado para query param.
+     * @param {*} value Valor a serializar.
+     * @param {'string'|'number'|'boolean'|'csv'|'json'} type Tipo de serializacion.
+     * @returns {string}
+     */
     const stringifyByType = (value, type) => {
         if (value === undefined || value === null) return '';
 
@@ -204,6 +260,13 @@
         }
     };
 
+    /**
+     * Compara dos valores usando la misma serializacion del query param.
+     * @param {*} left Valor izquierdo.
+     * @param {*} right Valor derecho.
+     * @param {'string'|'number'|'boolean'|'csv'|'json'} type Tipo de comparacion.
+     * @returns {boolean}
+     */
     const areValuesEquivalent = (left, right, type) => {
         if (left === right) return true;
 
@@ -213,6 +276,12 @@
         return leftString === rightString;
     };
 
+    /**
+     * Mezcla y valida opciones efectivas de la instancia.
+     * @param {HTMLElement} element Elemento sincronizable.
+     * @param {Object} [options={}] Overrides por API.
+     * @returns {Object}
+     */
     const getValidatedOptions = (element, options = {}) => {
         const mergedOptions = { ...QUERY_SYNC_STATE_DEFAULTS, ...getOptionsFromData(element), ...options };
 

@@ -8,7 +8,15 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Selector declarativo del select padre que dispara la carga de opciones.
+	 * @type {string}
+	 */
 	const SELECTOR_PARENT = '[data-role="parent-select"]'
+		/**
+		 * Defaults de configuracion de ChildSelect.
+		 * @type {Object}
+		 */
 		, CHILD_SELECT_DEFAULTS = Object.freeze({
 			childSelectSelector: '',
 			childrenUrl: '',
@@ -39,9 +47,22 @@
 				return false;
 			}
 		})
+		/**
+		 * Registro de instancias por elemento padre.
+		 * @type {WeakMap<HTMLElement, ChildSelect>}
+		 */
 		, INSTANCES = new WeakMap()
+		/**
+		 * Nodos removidos pendientes de limpieza diferida.
+		 * @type {Set<Element>}
+		 */
 		, PENDING_REMOVALS = new Set();
 
+	/**
+	 * Normaliza valores declarativos a booleanos.
+	 * @param {unknown} value Valor fuente.
+	 * @returns {boolean}
+	 */
 	const parseBoolean = (value) => {
 		if (value === true) return true;
 		if (value === false) return false;
@@ -51,6 +72,11 @@
 		return false;
 	};
 
+	/**
+	 * Obtiene todos los elementos padre compatibles dentro de un root.
+	 * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+	 * @returns {HTMLElement[]}
+	 */
 	const getSubjects = (root = document) => {
 		const subjects = [];
 
@@ -65,8 +91,18 @@
 		return subjects;
 	};
 
+	/**
+	 * Resuelve el select hijo por selector CSS.
+	 * @param {string} selector Selector configurado.
+	 * @returns {HTMLSelectElement|null}
+	 */
 	const getTargetElement = (selector) => selector ? document.querySelector(selector) : null;
 
+	/**
+	 * Dispara evento change con bubbling para sincronizar integraciones externas.
+	 * @param {HTMLElement} element Elemento destino del evento.
+	 * @returns {void}
+	 */
 	const triggerChange = (element) => {
 		element.dispatchEvent(new Event('change', { bubbles: true }));
 	};
@@ -85,6 +121,12 @@
 		return selectElement.value || null;
 	};
 
+	/**
+	 * Aplica valor(es) al select hijo soportando modo simple y multiple.
+	 * @param {HTMLSelectElement} selectElement Select a actualizar.
+	 * @param {string|string[]|null|undefined} value Valor objetivo.
+	 * @returns {void}
+	 */
 	const setSelectValue = (selectElement, value) => {
 		if (selectElement.multiple) {
 			const values = Array.isArray(value) ? value.map(String) : [];
@@ -96,6 +138,11 @@
 		selectElement.value = value != null ? String(value) : '';
 	};
 
+	/**
+	 * Lee opciones declarativas desde dataset del select padre.
+	 * @param {HTMLElement} element Elemento padre.
+	 * @returns {Object}
+	 */
 	const getOptionsFromData = (element) => {
 		const {
 			childSelect,
@@ -128,6 +175,12 @@
 		return dataOptions;
 	};
 
+	/**
+	 * Mezcla, valida y normaliza opciones efectivas de instancia.
+	 * @param {HTMLElement} element Select padre.
+	 * @param {Object} [options={}] Overrides por API.
+	 * @returns {Object}
+	 */
 	const getValidatedOptions = (element, options = {}) => {
 		const mergedOptions = { ...getOptionsFromData(element), ...options };
 
@@ -154,6 +207,10 @@
 		return mergedOptions;
 	};
 
+	/**
+	 * Destruye instancias asociadas a nodos realmente removidos del DOM.
+	 * @returns {void}
+	 */
 	const flushPendingRemovals = () => {
 		PENDING_REMOVALS.forEach((node) => {
 			if (!node.isConnected) {
@@ -163,6 +220,11 @@
 		});
 	};
 
+	/**
+	 * Agenda una comprobacion diferida para evitar destruir nodos temporalmente movidos.
+	 * @param {Element} node Nodo removido en la mutacion.
+	 * @returns {void}
+	 */
 	const scheduleRemovalCheck = (node) => {
 		PENDING_REMOVALS.add(node);
 		queueMicrotask(flushPendingRemovals);

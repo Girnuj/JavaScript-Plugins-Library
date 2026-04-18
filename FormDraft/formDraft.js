@@ -8,10 +8,26 @@
 (function () {
     'use strict';
 
+    /**
+     * Selector declarativo de formularios con persistencia de borrador.
+     * @type {string}
+     */
     const SELECTOR_SUBJECT = 'form[data-form-draft]'
+        /**
+         * Registro de instancias por formulario.
+         * @type {WeakMap<HTMLFormElement, FormDraft>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults de configuracion para guardado/restauracion de borradores.
+     * @type {Object}
+     */
     const FORM_DRAFT_DEFAULTS = Object.freeze({
         storage: 'local',
         keyPrefix: 'formDraft',
@@ -33,6 +49,11 @@
         onError: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor crudo.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -42,6 +63,12 @@
         return undefined;
     };
 
+    /**
+     * Convierte valores a numero con fallback seguro.
+     * @param {unknown} value Valor fuente.
+     * @param {number} [fallback=0] Valor por defecto.
+     * @returns {number}
+     */
     const parseNumber = (value, fallback = 0) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -58,6 +85,11 @@
         return normalized === 'session' ? 'session' : 'local';
     };
 
+    /**
+     * Obtiene storage disponible de forma segura.
+     * @param {'local'|'session'} storageName Nombre de backend.
+     * @returns {Storage|null}
+     */
     const getStorageSafe = (storageName) => {
         try {
             if (storageName === 'session') {
@@ -69,6 +101,11 @@
         }
     };
 
+    /**
+     * Verifica si el campo pertenece a tipos soportados por serializacion.
+     * @param {Element} field Campo a evaluar.
+     * @returns {boolean}
+     */
     const isSupportedField = (field) => {
         return field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement;
     };
@@ -85,6 +122,11 @@
         return ['submit', 'button', 'reset', 'image'].includes(type);
     };
 
+    /**
+     * Obtiene formularios compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLFormElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -99,6 +141,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a formularios removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -108,6 +154,11 @@
         });
     };
 
+    /**
+     * Agenda verificacion diferida de remocion de nodos.
+     * @param {Element} node Nodo removido en mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);

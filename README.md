@@ -36,6 +36,7 @@ ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 - [Modal](Modal/): abre y cierra modales usando triggers HTML con atributos `data-*` y API opcional.
 - [ModalSteps](ModalSteps/): ejecuta flujos de modal por pasos, con carga remota de contenido, soporte `POST`/`GET` y eventos para controlar cada etapa.
 - [NotificationPush](NotificationPush/): dispara notificaciones tipo toast y envia payload dinamico por `data-np-*` a un receptor o endpoint sin cache local.
+- [OfflineActionQueue](OfflineActionQueue/): encola acciones cuando falla la red y las reintenta en orden con persistencia local, ideal para UX resiliente en conectividad inestable.
 - [QuerySyncState](QuerySyncState/): sincroniza controles UI con query params para enlaces compartibles, navegacion back/forward y filtros persistentes.
 - [ReplaceMe](ReplaceMe/): reemplaza un trigger por HTML remoto obtenido mediante `POST` o `GET`.
 - [RequestState](RequestState/): centraliza estados `idle/loading/success/error` en acciones async, con modo mock para QA y request opcional.
@@ -125,6 +126,7 @@ Regla de prioridad: root directo por plugin > root por selector en `<html>` > `d
 - `FormDraft`: `data-pp-observe-root-form-draft`
 - `RequestState`: `data-pp-observe-root-request-state`
 - `NotificationPush`: `data-pp-observe-root-notification-push`
+- `OfflineActionQueue`: `data-pp-observe-root-offline-action-queue`
 - `QuerySyncState`: `data-pp-observe-root-query-sync-state`
 - `UIState`: `data-pp-observe-root-ui-state`
 - `ChildSelect`: `data-pp-observe-root-child-select`

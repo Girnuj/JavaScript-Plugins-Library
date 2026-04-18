@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Integracion - OfflineActionQueue</title>
+  <style>
+    :root {
+      --bg: #f5f8fc;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --muted: #4b5563;
+      --line: #d7e0ef;
+      --brand: #1d4ed8;
+      --ok: #15803d;
+      --warn: #b45309;
+      --err: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #dbeafe, transparent 33%),
+        radial-gradient(circle at top right, #dcfce7, transparent 35%),
+        var(--bg);
+    }
+
+    .layout {
+      max-width: 940px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--card);
+      box-shadow: 0 10px 26px rgba(2, 6, 23, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    h1, h2 { margin: 0; }
+    p { margin: 0; color: var(--muted); }
+
+    .inline {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .row { display: grid; gap: 8px; }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #c9d5ea;
+      border-radius: 8px;
+      padding: 0.62rem 0.7rem;
+      font: inherit;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 0.62rem 0.9rem;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ghost {
+      background: #e2e8f0;
+      color: #111827;
+    }
+
+    .warn {
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    .danger { background: #dc2626; }
+
+    .pill {
+      border: 1px solid #c9d5ea;
+      border-radius: 999px;
+      background: #f8fbff;
+      padding: 0.28rem 0.6rem;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .state {
+      border: 1px dashed #9fb4d8;
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 8px 10px;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    pre {
+      margin: 0;
+      border-radius: 8px;
+      background: #0f2138;
+      color: #d3eeff;
+      padding: 10px;
+      min-height: 130px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .is-loading { opacity: 0.72; pointer-events: none; }
+
+    @media (max-width: 760px) {
+      .inline { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main
+    class="layout"
+    data-oaq-profile="integrationCreateOrder"
+  >
+    <section class="card">
+      <h1>OfflineActionQueue + RequestState + NotificationPush</h1>
+      <p>
+        Este ejemplo separado muestra un flujo resiliente: si falla la red, la acción se encola y se reintenta en orden al recuperar conectividad.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Control de simulación</h2>
+      <div class="actions">
+        <label class="pill">
+          <input id="simulateFail" type="checkbox" checked /> Simular red inestable
+        </label>
+        <span class="pill">Queue size: <strong id="queueSize">0</strong></span>
+        <button id="btnFlush" type="button" class="warn">Forzar flush</button>
+        <button id="btnClear" type="button" class="danger">Limpiar cola</button>
+      </div>
+      <div id="requestStateBox" class="state">
+        Estado visual: <strong id="stateValue">idle</strong> | <span id="stateMessage">Sin actividad</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Acción resiliente (POST)</h2>
+      <!--
+        Comentario clave:
+        Este form es el trigger del plugin OfflineActionQueue.
+        En caso de error de red, la acción se guarda en localStorage y luego se reintenta.
+      -->
+      <form
+        id="oaqForm"
+        data-offline-action-queue
+        data-oaq-endpoint="/api/orders"
+        data-oaq-method="POST"
+        data-oaq-action-type="create-order"
+        data-oaq-payload-mode="form"
+      >
+        <div class="inline">
+          <div class="row">
+            <label for="orderName">Nombre de orden</label>
+            <input id="orderName" name="orderName" required placeholder="Ej: Renovación licencia" />
+          </div>
+          <div class="row">
+            <label for="owner">Responsable</label>
+            <input id="owner" name="owner" required placeholder="Ej: Maria" />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">Crear orden resiliente</button>
+          <button id="btnReplayPush" type="button" class="ghost">Notificar estado actual</button>
+        </div>
+      </form>
+
+      <!--
+        Comentario clave:
+        Este trigger de NotificationPush se dispara por script cuando
+        OfflineActionQueue reporta queued/sent/failed/conflict.
+      -->
+      <button
+        id="npTrigger"
+        type="button"
+        hidden
+        data-notification-push
+        data-np-title="OfflineActionQueue"
+        data-np-message=""
+        data-np-type="info"
+        data-np-duration="2200"
+        data-np-target="#pushReceiver"
+        data-np-name-source="offlineActionQueue"
+      >Push interno</button>
+
+      <div id="pushReceiver" class="state">
+        Push receiver: <strong data-np-field="title">-</strong> | <span data-np-field="message">-</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Queue snapshot</h2>
+      <pre id="snapshot"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Logs</h2>
+      <pre id="logs"></pre>
+    </section>
+  </main>
+
+  <script src="../OfflineActionQueue/offlineActionQueue.min.js"></script>
+  <script src="../NotificationPush/notificationPush.min.js"></script>
+  <script>
+    (function () {
+      // Perfil reutilizable: centraliza configuracion para reducir atributos data-* en los triggers.
+      window.OfflineActionQueue.registerProfile('integrationCreateOrder', {
+        storageKey: 'demo:plugin-integration:oaq',
+        maxRetries: 6,
+        baseRetryDelayMs: 700,
+        maxRetryDelayMs: 12000,
+        autoFlushOnOnline: true,
+        autoFlushOnInit: true,
+        queueOnHttpErrors: true,
+        tryImmediate: true
+      });
+
+      var formEl = document.getElementById('oaqForm')
+        , simulateFailEl = document.getElementById('simulateFail')
+        , queueSizeEl = document.getElementById('queueSize')
+        , snapshotEl = document.getElementById('snapshot')
+        , logsEl = document.getElementById('logs')
+        , stateValueEl = document.getElementById('stateValue')
+        , stateMessageEl = document.getElementById('stateMessage')
+        , btnFlushEl = document.getElementById('btnFlush')
+        , btnClearEl = document.getElementById('btnClear')
+        , btnReplayPushEl = document.getElementById('btnReplayPush')
+        , npTriggerEl = document.getElementById('npTrigger')
+        , originalFetch = window.fetch;
+
+      function log(text) {
+        logsEl.textContent += '[' + new Date().toLocaleTimeString() + '] ' + text + '\n';
+        logsEl.scrollTop = logsEl.scrollHeight;
+      }
+
+      function setState(name, message) {
+        stateValueEl.textContent = name;
+        stateMessageEl.textContent = message || '';
+      }
+
+      function updateSnapshot() {
+        var instance = window.OfflineActionQueue.getInstance(formEl);
+        if (!instance) return;
+
+        var snapshot = instance.getQueueSnapshot();
+        queueSizeEl.textContent = String(snapshot.length);
+        snapshotEl.textContent = JSON.stringify(snapshot, null, 2);
+      }
+
+      // Comentario clave:
+      // Mock de fetch para simular redes inestables en entorno local.
+      window.fetch = function (url, init) {
+        if (simulateFailEl.checked) {
+          return Promise.reject(new Error('Simulated network failure'));
+        }
+
+        return Promise.resolve(new Response(JSON.stringify({
+          ok: true,
+          endpoint: url,
+          method: init && init.method ? init.method : 'GET'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      };
+
+      function pushToast(message, type) {
+        npTriggerEl.dataset.npMessage = message;
+        npTriggerEl.dataset.npType = type || 'info';
+        npTriggerEl.click();
+      }
+
+      formEl.addEventListener('queued.plugin.offlineActionQueue', function (evt) {
+        setState('queued', 'Acción guardada en cola por fallo de red');
+        log('queued -> ' + evt.detail.action.actionType + ' | queue=' + evt.detail.queueSize);
+        pushToast('Acción encolada. Se reenviará al volver la red.', 'warning');
+        updateSnapshot();
+      });
+
+      formEl.addEventListener('sent.plugin.offlineActionQueue', function (evt) {
+        setState('success', 'Acción enviada correctamente');
+        log('sent -> ' + evt.detail.action.actionType + ' | status=' + evt.detail.result.status);
+        pushToast('Acción enviada con éxito.', 'success');
+        updateSnapshot();
+      });
+
+      formEl.addEventListener('failed.plugin.offlineActionQueue', function (evt) {
+        setState('error', 'La acción superó el límite de reintentos');
+        log('failed -> ' + evt.detail.action.actionType + ' | status=' + evt.detail.result.status);
+        pushToast('Acción descartada tras varios intentos.', 'error');
+        updateSnapshot();
+      });
+
+      formEl.addEventListener('conflict.plugin.offlineActionQueue', function (evt) {
+        setState('conflict', 'Se detectó conflicto de versión/estado');
+        log('conflict -> ' + evt.detail.action.actionType + ' | status=' + evt.detail.result.status);
+        pushToast('Conflicto detectado. Revisar estrategia de merge.', 'warning');
+        updateSnapshot();
+      });
+
+      formEl.addEventListener('drained.plugin.offlineActionQueue', function () {
+        setState('drained', 'Cola vacía');
+        log('drained -> queue vacía');
+        updateSnapshot();
+      });
+
+      btnFlushEl.addEventListener('click', function () {
+        var instance = window.OfflineActionQueue.getInstance(formEl);
+        if (!instance) return;
+
+        formEl.classList.add('is-loading');
+        instance.flush()
+          .then(function (count) {
+            log('manual flush -> enviados=' + count);
+            updateSnapshot();
+          })
+          .finally(function () {
+            formEl.classList.remove('is-loading');
+          });
+      });
+
+      btnClearEl.addEventListener('click', function () {
+        var instance = window.OfflineActionQueue.getInstance(formEl);
+        if (!instance) return;
+
+        instance.clearQueue();
+        setState('idle', 'Cola limpiada manualmente');
+        log('manual clear -> queue limpia');
+        updateSnapshot();
+      });
+
+      btnReplayPushEl.addEventListener('click', function () {
+        pushToast('Estado actual: ' + stateValueEl.textContent, 'info');
+      });
+
+      simulateFailEl.addEventListener('change', function () {
+        var enabled = simulateFailEl.checked;
+        log('network simulation -> ' + (enabled ? 'FAIL ON' : 'FAIL OFF'));
+
+        if (!enabled) {
+          // Comentario clave:
+          // Al desactivar la falla, forzamos flush para replay inmediato.
+          var instance = window.OfflineActionQueue.getInstance(formEl);
+          instance && instance.flush();
+        }
+      });
+
+      window.addEventListener('beforeunload', function () {
+        window.fetch = originalFetch;
+      });
+
+      updateSnapshot();
+      setState('idle', 'Demo lista');
+      log('demo ready');
+    })();
+  </script>
+</body>
+</html>

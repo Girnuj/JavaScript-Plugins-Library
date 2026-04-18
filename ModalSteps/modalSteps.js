@@ -8,15 +8,33 @@
 (function () {
     'use strict';
 
+    /** @type {string} */
     const CLASS_NAME_LOADING = 'm-loading'
+        /** @type {string} */
         , ATTR_DIALOG_SRC = 'data-dialog-src'
+        /** @type {string} */
         , SELECTOR_SUBJECT = '[role="dialog"][data-dialog="steps"],dialog[data-dialog="steps"]'
+        /** @type {string} */
         , SELECTOR_DIALOG_STEP_TARGET = '[data-dialog="main"]'
+        /** @type {string} */
         , EVENT_HIDDEN_NATIVE = 'hidden.plugin.modalStep'
+        /** @type {string} */
         , EVENT_SHOWN_NATIVE = 'shown.plugin.modalStep'
+        /**
+         * Registro de instancias por modal.
+         * @type {WeakMap<HTMLElement, ModalSteps>}
+         */
         , INSTANCES = new WeakMap()
+        /**
+         * Nodos removidos pendientes de limpieza diferida.
+         * @type {Set<Element>}
+         */
         , PENDING_REMOVALS = new Set();
 
+    /**
+     * Defaults de configuracion de ModalSteps.
+     * @type {Object}
+     */
     const STEPS_DIALOG_DEFAULTS = Object.freeze({
         reloadOnNoContent: true,
         strictSameOrigin: true,
@@ -26,6 +44,11 @@
         after204: function () { },
     });
 
+    /**
+     * Normaliza valores declarativos a booleanos.
+     * @param {unknown} value Valor fuente.
+     * @returns {boolean|undefined}
+     */
     const parseBoolean = (value) => {
         if (value === undefined) return undefined;
         if (typeof value === 'boolean') return value;
@@ -35,6 +58,11 @@
         return undefined;
     };
 
+    /**
+     * Convierte HTML/string/nodos a una lista de nodos renderizables.
+     * @param {string|Node|NodeList|Array<Node>|unknown} html Fuente de contenido.
+     * @returns {Node[]}
+     */
     const toElements = (html) => {
         if (!html) return [];
         if (typeof html === 'string') {
@@ -47,6 +75,11 @@
         return [];
     };
 
+    /**
+     * Parsea body de respuesta en modo JSON o texto.
+     * @param {Response} response Respuesta fetch.
+     * @returns {Promise<{isJson:boolean,data:any,text:string}>}
+     */
     const parseResponseBody = async (response) => {
         const contentType = response.headers.get('Content-Type') || ''
             , isJson = contentType.toLowerCase().includes('json');
@@ -60,6 +93,12 @@
         return { isJson, data: null, text };
     };
 
+    /**
+     * Normaliza metodo HTTP en mayusculas.
+     * @param {unknown} value Metodo fuente.
+     * @param {string} [fallback='POST'] Metodo fallback.
+     * @returns {string}
+     */
     const normalizeMethod = (value, fallback = 'POST') => {
         const method = String(value || fallback).trim().toUpperCase();
         return method || fallback;
@@ -94,6 +133,12 @@
         return url;
     };
 
+    /**
+     * Convierte payload arbitrario a FormData utilizable por fetch.
+     * @param {FormData|Object<string,any>|unknown} value Valor fuente.
+     * @param {HTMLFormElement} form Formulario fallback.
+     * @returns {FormData}
+     */
     const toFormData = (value, form) => {
         if (value instanceof FormData) return value;
         if (value && typeof value === 'object') {
@@ -114,6 +159,13 @@
         return new FormData(form);
     };
 
+    /**
+     * Construye request final desde un formulario de step.
+     * @param {HTMLFormElement} form Formulario del step actual.
+     * @param {(function(HTMLFormElement):(FormData|Object<string,any>))|null} submitDataGetter Builder custom opcional.
+     * @param {Object} options Opciones de instancia.
+     * @returns {{action:string,requestInit:RequestInit}}
+     */
     const buildRequestFromForm = (form, submitDataGetter, options) => {
         const action = form.getAttribute('action') || window.location.href
             , method = normalizeMethod(form.getAttribute('method') || 'POST')
@@ -155,6 +207,11 @@
         };
     };
 
+    /**
+     * Extrae config de step request desde el detail de un evento custom.
+     * @param {Event} evt Evento fuente.
+     * @returns {{url:string,requestInit:RequestInit}|null}
+     */
     const parseStepRequestFromEvent = (evt) => {
         const detail = evt && evt.detail ? evt.detail : null;
         if (!detail) return null;
@@ -185,6 +242,11 @@
         return null;
     };
 
+    /**
+     * Obtiene modales de pasos compatibles dentro de un root.
+     * @param {ParentNode|Element|Document} [root=document] Nodo raiz.
+     * @returns {HTMLElement[]}
+     */
     const getSubjects = (root = document) => {
         const subjects = [];
 
@@ -199,6 +261,10 @@
         return subjects;
     };
 
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
     const flushPendingRemovals = () => {
         PENDING_REMOVALS.forEach((node) => {
             if (!node.isConnected) {
@@ -208,6 +274,11 @@
         });
     };
 
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
     const scheduleRemovalCheck = (node) => {
         PENDING_REMOVALS.add(node);
         queueMicrotask(flushPendingRemovals);
