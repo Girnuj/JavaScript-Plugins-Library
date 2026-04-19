@@ -21,6 +21,7 @@ Estos se inicializan solos al detectar los atributos HTML necesarios, asi que no
 Plugins funcionales en JavaScript nativo.
 ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 
+
 ## Plugins Disponibles
 
 - [ChildSelect](ChildSelect/): carga opciones dependientes en un select hijo a partir del valor del select padre.
@@ -28,6 +29,7 @@ ECMAScript 2020 esta soportado por la mayoria de navegadores modernos.
 - [FormDraft](FormDraft/): guarda y restaura borradores de formularios en `localStorage`/`sessionStorage`, ideal para flujos largos.
 - [FormRequest](FormRequest/): extiende formularios nativos con envio asincrono via `fetch`, manejo de errores por campo, seguridad y control de retries/timeouts.
 - [FormValidate](FormValidate/): agrega validaciones extendidas por `data-*` para reglas de negocio, permite crear reglas custom nuevas y bloquea envio cuando no se cumplen.
+- [GlobalState](GlobalState/): gestión de estado global y pub/sub de eventos para compartir datos y eventos entre plugins, vistas o componentes.
 - [ImgUploadPreview](ImgUploadPreview/): previsualiza imagenes seleccionadas desde un input file en un elemento `<img>`.
 - [InfinitePager](InfinitePager/): resuelve paginacion incremental con "ver mas" o infinite scroll usando `fetch`.
 - [InputSwitchFriendly](InputSwitchFriendly/): muestra etiquetas amigables segun el estado de un switch/checkbox.

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test GlobalState</title>
+  <script src="globalState.js"></script>
+  <style>
+    .log { background: #f4f4f4; border: 1px solid #ccc; padding: 1em; margin-top: 1em; max-width: 600px; }
+    input, button { margin: 0.5em 0; }
+  </style>
+</head>
+<body>
+  <h1>Test GlobalState</h1>
+
+  <label>
+    Nombre global:
+    <input id="nombreInput" type="text" placeholder="Escribe un nombre...">
+  </label>
+  <button id="guardarBtn">Guardar en GlobalState</button>
+  <button id="leerBtn">Leer de GlobalState</button>
+
+  <h2>Pub/Sub de eventos custom</h2>
+  <button id="publicarEventoBtn">Publicar evento 'notificacion'</button>
+
+  <div class="log" id="log"></div>
+
+  <script>
+    const log = (msg) => {
+      const el = document.getElementById('log');
+      el.innerHTML += `<div>${msg}</div>`;
+      el.scrollTop = el.scrollHeight;
+    };
+
+    // Suscribirse a cambios de la clave 'nombre'
+    GlobalState.subscribe('nombre', (nuevoValor) => {
+      log(`<b>Suscripción:</b> nombre actualizado a <code>${nuevoValor}</code>`);
+    });
+
+    // Escuchar evento custom global
+    document.addEventListener('changed.plugin.globalState', (e) => {
+      log(`<b>Evento:</b> changed.plugin.globalState → <code>${e.detail.key}</code> = <code>${e.detail.value}</code>`);
+    });
+
+    // Suscribirse a evento custom 'notificacion'
+    GlobalState.on('notificacion', (payload) => {
+      log(`<b>Evento pub/sub:</b> notificacion → <code>${payload.mensaje}</code>`);
+    });
+
+    document.getElementById('guardarBtn').onclick = () => {
+      const nombre = document.getElementById('nombreInput').value;
+      GlobalState.set('nombre', nombre);
+      log(`<i>Guardado 'nombre' = <code>${nombre}</code></i>`);
+    };
+
+    document.getElementById('leerBtn').onclick = () => {
+      const nombre = GlobalState.get('nombre');
+      log(`<i>Leído 'nombre' = <code>${nombre}</code></i>`);
+    };
+
+    document.getElementById('publicarEventoBtn').onclick = () => {
+      GlobalState.publish('notificacion', { mensaje: '¡Hola desde GlobalState!' });
+    };
+  </script>
+</body>
+</html>
