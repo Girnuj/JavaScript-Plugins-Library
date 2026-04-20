@@ -150,6 +150,11 @@
             .filter(Boolean);
     };
 
+    /**
+     * Divide una cadena de clases separadas por espacios en un array de tokens limpios.
+     * @param {string|undefined|null} value Cadena de clases.
+     * @returns {string[]} Array de clases no vacías.
+     */
     const splitClassTokens = (value) => {
         if (!value || typeof value !== 'string') return [];
         return value
@@ -247,6 +252,11 @@
             || field.hasAttribute('data-fv-custom');
     };
 
+    /**
+     * Normaliza el valor de un campo de formulario a string, considerando checkboxes y radios.
+     * @param {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement} field Campo a normalizar.
+     * @returns {string}
+     */
     const normalizeFieldValue = (field) => {
         if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
             return field.checked ? (field.value || 'on') : '';
@@ -254,6 +264,11 @@
         return String(field.value || '').trim();
     };
 
+    /**
+     * Determina si un campo tiene un valor relevante para validación.
+     * @param {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement} field Campo a evaluar.
+     * @returns {boolean}
+     */
     const hasMeaningfulValue = (field) => {
         if (field instanceof HTMLInputElement) {
             if (field.type === 'checkbox' || field.type === 'radio') {
@@ -268,6 +283,12 @@
         return normalizeFieldValue(field) !== '';
     };
 
+    /**
+     * Busca un campo de referencia en el formulario o en el documento según selector.
+     * @param {HTMLFormElement} form Formulario base.
+     * @param {string} selector Selector CSS del campo de referencia.
+     * @returns {HTMLElement|null}
+     */
     const resolveReferenceField = (form, selector) => {
         if (!selector || typeof selector !== 'string') return null;
 
@@ -278,6 +299,11 @@
         }
     };
 
+    /**
+     * Extrae el selector de referencia de una regla required-if.
+     * @param {string} rawRule Regla cruda (selector:valor).
+     * @returns {string} Selector de referencia.
+     */
     const parseRequiredIfReferenceSelector = (rawRule) => {
         if (!rawRule || typeof rawRule !== 'string') return '';
         const separatorIndex = rawRule.indexOf(':');
@@ -285,6 +311,11 @@
         return rawRule.slice(0, separatorIndex).trim();
     };
 
+    /**
+     * Parsea una regla de rango numérico (min:max) a objeto.
+     * @param {string} rawRange Cadena cruda min:max.
+     * @returns {{hasRule: boolean, min: number|null, max: number|null}}
+     */
     const parseNumberRange = (rawRange) => {
         if (!rawRange || typeof rawRange !== 'string') {
             return { hasRule: false, min: null, max: null };
@@ -313,6 +344,12 @@
         };
     };
 
+    /**
+     * Verifica si un archivo cumple con un tipo aceptado (por extensión o MIME).
+     * @param {File} file Archivo a validar.
+     * @param {string} token Token de tipo aceptado (ej: .jpg, image/*).
+     * @returns {boolean}
+     */
     const fileMatchesAcceptedType = (file, token) => {
         if (!file || !token) return false;
 
@@ -397,11 +434,10 @@
          * @returns {HTMLElement|null}
          */
         get summaryElement() {
-
-
             // 1. Prioridad: asp-validation-summary="ModelOnly" o "All" (Razor/.NET) solo dentro del formulario
             let summary = this.subject.querySelector('[asp-validation-summary="ModelOnly"]')
-                || this.subject.querySelector('[asp-validation-summary="All"]');
+                || this.subject.querySelector('[asp-validation-summary="All"]')
+                || this.subject.querySelector('[asp-validation-summary]');
             if (summary) return summary;
 
             // 2. Fallback: summarySelector del plugin
