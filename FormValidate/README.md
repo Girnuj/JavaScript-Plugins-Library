@@ -79,7 +79,7 @@ Estas reglas no duplican atributos nativos como `required`, `minlength` o `patte
 - `data-fv-message-custom-nombre-regla="..."`: mensaje especifico por regla custom.
 - `data-fv-message-target="#selector"`: renderiza mensaje en un elemento especifico.
 
-### Compatibilidad con Razor/.NET (asp-validation-for)
+## Compatibilidad con Razor/.NET (asp-validation-for)
 
 FormValidate es compatible con formularios Razor/.NET: si existe un elemento con el atributo `asp-validation-for="NOMBRE"` (donde NOMBRE es el name/id del campo), el mensaje de error del plugin se mostrará automáticamente en ese contenedor, sin necesidad de agregar atributos extra del plugin.
 
@@ -122,82 +122,6 @@ Ejemplo clásico:
   <div data-form-validate-summary hidden></div>
   ...
 </form>
-```
-
-
-
-## Ejemplo mínimo
-
-```html
-<form data-form-validate>
-  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="El email no puede tener espacios." />
-  <!-- El mensaje de error del plugin se mostrará aquí automáticamente por compatibilidad con Razor/.NET -->
-  <span asp-validation-for="email"></span>
-
-  <input id="pass" type="password" />
-
-  <input
-    name="passConfirm"
-    type="password"
-    data-fv-equals="#pass"
-    data-fv-message-equals="La confirmacion no coincide."
-  />
-  <div data-fv-message-for="passConfirm"></div>
-
-  <button type="submit">Enviar</button>
-</form>
-```
-
-### Ejemplo mínimo con resumen Razor
-
-```html
-<form data-form-validate>
-  <div asp-validation-summary="All" class="text-danger"></div>
-
-  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="El email no puede tener espacios." />
-  <span asp-validation-for="email"></span>
-
-  <input id="pass" type="password" />
-
-  <input
-    name="passConfirm"
-    type="password"
-    data-fv-equals="#pass"
-    data-fv-message-equals="La confirmacion no coincide."
-  />
-  <span asp-validation-for="passConfirm"></span>
-
-  <button type="submit">Enviar</button>
-</form>
-```
-## API publica
-
-```html
-<script>
-  var form = document.querySelector('form[data-form-validate]');
-
-  var instance = window.Plugins.FormValidate.init(form, {
-    focusFirstInvalid: true,
-    validateOnInput: true,
-    validateOnBlur: true,
-    invalidClass: 'is-invalid',
-    validClass: 'is-valid',
-    summarySelector: '[data-form-validate-summary]',
-    beforeValidate: function (formEl) {
-      console.log('before validate', formEl);
-    },
-    afterValidate: function (errors, formEl) {
-      console.log('after validate', errors, formEl);
-    }
-  });
-
-  instance.validateForm({ emitEvents: true, focusFirst: true });
-
-  window.Plugins.FormValidate.getInstance(form);
-  window.Plugins.FormValidate.destroy(form);
-  window.Plugins.FormValidate.initAll(document);
-  window.Plugins.FormValidate.destroyAll(document);
-</script>
 ```
 
 ## Ejemplo unificado (todas las validaciones)
@@ -299,19 +223,28 @@ Ejemplo clásico:
 </form>
 ```
 
-Metodos principales:
+## Ejemplo mínimo con resumen Razor
 
-- `window.Plugins.FormValidate.init(element, options)`: crea o reutiliza una instancia.
-- `instance.validateForm(config)`: ejecuta validacion completa y devuelve `true/false`.
-- `window.Plugins.FormValidate.getInstance(element)`: devuelve la instancia actual o `null`.
-- `window.Plugins.FormValidate.destroy(element)`: destruye una instancia concreta.
-- `window.Plugins.FormValidate.initAll(root)`: inicializa formularios compatibles en un contenedor.
-- `window.Plugins.FormValidate.destroyAll(root)`: destruye instancias en un contenedor.
-- `window.Plugins.FormValidate.registerCustomRule(name, validator)`: registra una regla custom global.
-- `window.Plugins.FormValidate.getCustomRule(name)`: obtiene una regla custom global.
-- `window.Plugins.FormValidate.hasCustomRule(name)`: valida si una regla custom existe.
-- `window.Plugins.FormValidate.unregisterCustomRule(name)`: elimina una regla custom global.
-- `window.Plugins.FormValidate.listCustomRules()`: lista nombres de reglas custom registradas.
+```html
+<form data-form-validate>
+  <div asp-validation-summary="All" class="text-danger"></div>
+
+  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="El email no puede tener espacios." />
+  <span asp-validation-for="email"></span>
+
+  <input id="pass" type="password" />
+
+  <input
+    name="passConfirm"
+    type="password"
+    data-fv-equals="#pass"
+    data-fv-message-equals="La confirmacion no coincide."
+  />
+  <span asp-validation-for="passConfirm"></span>
+
+  <button type="submit">Enviar</button>
+</form>
+```
 
 ### Reglas custom (API)
 
@@ -334,6 +267,48 @@ Puedes registrar reglas custom globales y usarlas en cualquier campo con `data-f
   });
 </script>
 ```
+## API publica
+
+```html
+<script>
+  const form = document.querySelector('form[data-form-validate]');
+
+  const instance = window.Plugins.FormValidate.init(form, {
+    focusFirstInvalid: true,
+    validateOnInput: true,
+    validateOnBlur: true,
+    invalidClass: 'is-invalid',
+    validClass: 'is-valid',
+    summarySelector: '[data-form-validate-summary]',
+    beforeValidate: function (formEl) {
+      console.log('before validate', formEl);
+    },
+    afterValidate: function (errors, formEl) {
+      console.log('after validate', errors, formEl);
+    }
+  });
+
+  instance.validateForm({ emitEvents: true, focusFirst: true });
+
+  window.Plugins.FormValidate.getInstance(form);
+  window.Plugins.FormValidate.destroy(form);
+  window.Plugins.FormValidate.initAll(document);
+  window.Plugins.FormValidate.destroyAll(document);
+</script>
+```
+Metodos principales:
+
+- `window.Plugins.FormValidate.init(element, options)`: crea o reutiliza una instancia.
+- `instance.validateForm(config)`: ejecuta validacion completa y devuelve `true/false`.
+- `window.Plugins.FormValidate.getInstance(element)`: devuelve la instancia actual o `null`.
+- `window.Plugins.FormValidate.destroy(element)`: destruye una instancia concreta.
+- `window.Plugins.FormValidate.initAll(root)`: inicializa formularios compatibles en un contenedor.
+- `window.Plugins.FormValidate.destroyAll(root)`: destruye instancias en un contenedor.
+- `window.Plugins.FormValidate.registerCustomRule(name, validator)`: registra una regla custom global.
+- `window.Plugins.FormValidate.getCustomRule(name)`: obtiene una regla custom global.
+- `window.Plugins.FormValidate.hasCustomRule(name)`: valida si una regla custom existe.
+- `window.Plugins.FormValidate.unregisterCustomRule(name)`: elimina una regla custom global.
+- `window.Plugins.FormValidate.listCustomRules()`: lista nombres de reglas custom registradas.
 
 Firma recomendada del validator custom:
 
@@ -374,5 +349,6 @@ data-pp-observe-root-form-validate
 ## Licencia
 
 Este plugin se distribuye bajo la licencia MIT.
-Copyright (c) 2026 Samuel Montenegro
 Consulta el archivo LICENSE en la raíz del repositorio para los términos completos.
+
+Copyright (c) 2026 Samuel Montenegro

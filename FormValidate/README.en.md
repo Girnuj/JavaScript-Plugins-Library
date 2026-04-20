@@ -1,92 +1,3 @@
-## Razor/.NET compatibility (asp-validation-for)
-
-FormValidate is compatible with Razor/.NET forms: if there is an element with the attribute `asp-validation-for="NAME"` (where NAME is the field's name or id), the plugin will automatically show the error message in that container, with no need for extra plugin attributes.
-
-Example:
-
-```html
-<input name="Email" ... />
-<span asp-validation-for="Email"></span>
-```
-
-This allows you to integrate extended plugin validations in .NET forms without changing Razor's validation message structure.
-
-You can still use `data-fv-message-for="nameOrId"` if you prefer.
-
-
-## Global summary
-
-FormValidate can show the error summary in a configurable container. By default it uses `[data-form-validate-summary]`, but if the form contains an element with `asp-validation-summary="ModelOnly"` or `asp-validation-summary="All"` (as in Razor/.NET), the plugin will automatically detect and use it for the error list.
-
-This allows the plugin's extended validation summary to integrate natively with Razor's validation structure, without duplicating containers.
-
-Razor example:
-
-```html
-<form data-form-validate>
-  ...
-  <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-  <!-- or -->
-  <div asp-validation-summary="All" class="text-danger"></div>
-  ...
-</form>
-```
-
-Classic example:
-
-```html
-<form data-form-validate>
-  ...
-  <div data-form-validate-summary hidden></div>
-  ...
-</form>
-```
-
-
-## Minimal example
-
-```html
-<form data-form-validate>
-  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="Email cannot contain spaces." />
-  <!-- The plugin error message will show here automatically for Razor/.NET compatibility -->
-  <span asp-validation-for="email"></span>
-
-  <input id="pass" type="password" />
-
-  <input
-    name="passConfirm"
-    type="password"
-    data-fv-equals="#pass"
-    data-fv-message-equals="Confirmation does not match."
-  />
-  <div data-fv-message-for="passConfirm"></div>
-
-  <button type="submit">Send</button>
-</form>
-```
-
-### Minimal example with Razor summary
-
-```html
-<form data-form-validate>
-  <div asp-validation-summary="All" class="text-danger"></div>
-
-  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="Email cannot contain spaces." />
-  <span asp-validation-for="email"></span>
-
-  <input id="pass" type="password" />
-
-  <input
-    name="passConfirm"
-    type="password"
-    data-fv-equals="#pass"
-    data-fv-message-equals="Confirmation does not match."
-  />
-  <span asp-validation-for="passConfirm"></span>
-
-  <button type="submit">Send</button>
-</form>
-```
 # FormValidate
 
 ## What it does
@@ -169,88 +80,48 @@ These rules avoid duplicating native attributes such as `required`, `minlength`,
 
 You can also target by field key using `data-fv-message-for="nameOrId"`.
 
-## Global summary
+## Razor/.NET compatibility (asp-validation-for)
 
-You can render all validation errors in one block:
+FormValidate is compatible with Razor/.NET forms: if there is an element with the attribute `asp-validation-for="NAME"` (where NAME is the field's name or id), the plugin will automatically show the error message in that container, with no need for extra plugin attributes.
+
+Example:
 
 ```html
-<div data-form-validate-summary hidden></div>
+<input name="Email" ... />
+<span asp-validation-for="Email"></span>
 ```
 
-## Minimal example
+This allows you to integrate extended plugin validations in .NET forms without changing Razor's validation message structure.
+
+You can still use `data-fv-message-for="nameOrId"` if you prefer.
+
+
+## Global summary
+
+FormValidate can show the error summary in a configurable container. By default it uses `[data-form-validate-summary]`, but if the form contains an element with `asp-validation-summary="ModelOnly"` or `asp-validation-summary="All"` (as in Razor/.NET), the plugin will automatically detect and use it for the error list.
+
+This allows the plugin's extended validation summary to integrate natively with Razor's validation structure, without duplicating containers.
+
+Razor example:
 
 ```html
 <form data-form-validate>
-  <input id="pass" type="password" />
-
-  <input
-    name="passConfirm"
-    type="password"
-    data-fv-equals="#pass"
-    data-fv-message-equals="Confirmation does not match."
-  />
-  <div data-fv-message-for="passConfirm"></div>
-
-  <button type="submit">Send</button>
+  ...
+  <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+  <!-- or -->
+  <div asp-validation-summary="All" class="text-danger"></div>
+  ...
 </form>
 ```
 
-## Public API
+Classic example:
 
 ```html
-<script>
-  var form = document.querySelector('form[data-form-validate]');
-
-  var instance = window.Plugins.FormValidate.init(form, {
-    focusFirstInvalid: true,
-    validateOnInput: true,
-    validateOnBlur: true,
-    invalidClass: 'is-invalid',
-    validClass: 'is-valid',
-    summarySelector: '[data-form-validate-summary]',
-    beforeValidate: function (formEl) {
-      console.log('before validate', formEl);
-    },
-    afterValidate: function (errors, formEl) {
-      console.log('after validate', errors, formEl);
-    }
-  });
-
-  instance.validateForm({ emitEvents: true, focusFirst: true });
-
-  window.Plugins.FormValidate.getInstance(form);
-  window.Plugins.FormValidate.destroy(form);
-  window.Plugins.FormValidate.initAll(document);
-  window.Plugins.FormValidate.destroyAll(document);
-</script>
-```
-
-## Quick examples for new rules
-
-### `required-any`
-
-```html
-<input id="phone" name="phone" type="text" />
-
-<input
-  id="email"
-  name="email"
-  type="text"
-  data-fv-required-any="#phone,#email"
-  data-fv-message-required-any="Provide phone or email."
-/>
-```
-
-### `number-range`
-
-```html
-<input
-  id="amount"
-  name="amount"
-  type="text"
-  data-fv-number-range="100:1000"
-  data-fv-message-number-range="Amount must be between 100 and 1000."
-/>
+<form data-form-validate>
+  ...
+  <div data-form-validate-summary hidden></div>
+  ...
+</form>
 ```
 
 ## Unified example (all validations)
@@ -352,19 +223,28 @@ You can render all validation errors in one block:
 </form>
 ```
 
-Main methods:
+### Minimal example with Razor summary
 
-- `window.Plugins.FormValidate.init(element, options)`: creates or reuses an instance.
-- `instance.validateForm(config)`: runs full validation and returns `true/false`.
-- `window.Plugins.FormValidate.getInstance(element)`: returns current instance or `null`.
-- `window.Plugins.FormValidate.destroy(element)`: destroys a specific instance.
-- `window.Plugins.FormValidate.initAll(root)`: initializes compatible forms in a container.
-- `window.Plugins.FormValidate.destroyAll(root)`: destroys instances in a container.
-- `window.Plugins.FormValidate.registerCustomRule(name, validator)`: registers a global custom rule.
-- `window.Plugins.FormValidate.getCustomRule(name)`: gets a global custom rule.
-- `window.Plugins.FormValidate.hasCustomRule(name)`: checks if a custom rule exists.
-- `window.Plugins.FormValidate.unregisterCustomRule(name)`: removes a global custom rule.
-- `window.Plugins.FormValidate.listCustomRules()`: lists registered custom rule names.
+```html
+<form data-form-validate>
+  <div asp-validation-summary="All" class="text-danger"></div>
+
+  <input id="email" name="email" type="text" data-fv-no-whitespace="true" data-fv-message-no-whitespace="Email cannot contain spaces." />
+  <span asp-validation-for="email"></span>
+
+  <input id="pass" type="password" />
+
+  <input
+    name="passConfirm"
+    type="password"
+    data-fv-equals="#pass"
+    data-fv-message-equals="Confirmation does not match."
+  />
+  <span asp-validation-for="passConfirm"></span>
+
+  <button type="submit">Send</button>
+</form>
+```
 
 ### Custom rules (API)
 
@@ -387,6 +267,48 @@ You can register global custom rules and reference them in fields via `data-fv-c
   });
 </script>
 ```
+## Public API
+
+```html
+<script>
+  const form = document.querySelector('form[data-form-validate]');
+
+  const instance = window.Plugins.FormValidate.init(form, {
+    focusFirstInvalid: true,
+    validateOnInput: true,
+    validateOnBlur: true,
+    invalidClass: 'is-invalid',
+    validClass: 'is-valid',
+    summarySelector: '[data-form-validate-summary]',
+    beforeValidate: function (formEl) {
+      console.log('before validate', formEl);
+    },
+    afterValidate: function (errors, formEl) {
+      console.log('after validate', errors, formEl);
+    }
+  });
+
+  instance.validateForm({ emitEvents: true, focusFirst: true });
+
+  window.Plugins.FormValidate.getInstance(form);
+  window.Plugins.FormValidate.destroy(form);
+  window.Plugins.FormValidate.initAll(document);
+  window.Plugins.FormValidate.destroyAll(document);
+</script>
+```
+Main methods:
+
+- `window.Plugins.FormValidate.init(element, options)`: creates or reuses an instance.
+- `instance.validateForm(config)`: runs full validation and returns `true/false`.
+- `window.Plugins.FormValidate.getInstance(element)`: returns current instance or `null`.
+- `window.Plugins.FormValidate.destroy(element)`: destroys a specific instance.
+- `window.Plugins.FormValidate.initAll(root)`: initializes compatible forms in a container.
+- `window.Plugins.FormValidate.destroyAll(root)`: destroys instances in a container.
+- `window.Plugins.FormValidate.registerCustomRule(name, validator)`: registers a global custom rule.
+- `window.Plugins.FormValidate.getCustomRule(name)`: gets a global custom rule.
+- `window.Plugins.FormValidate.hasCustomRule(name)`: checks if a custom rule exists.
+- `window.Plugins.FormValidate.unregisterCustomRule(name)`: removes a global custom rule.
+- `window.Plugins.FormValidate.listCustomRules()`: lists registered custom rule names.
 
 Recommended validator signature:
 
@@ -427,6 +349,6 @@ data-pp-observe-root-form-validate
 ## License
 
 This plugin is distributed under the MIT license.
+See the LICENSE file in the repository root for full terms.
 
 Copyright (c) 2026 Samuel Montenegro
-See the LICENSE file in the repository root for full terms.
