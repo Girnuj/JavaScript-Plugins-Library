@@ -25,7 +25,7 @@ Cuando un formulario necesita reglas como comparar dos campos, volver obligatori
 ## Incluir en HTML
 
 ```html
-<script src="./formValidate.js"></script>
+<script src="./formValidate.min.js"></script>
 ```
 
 ## Integracion con FormRequest

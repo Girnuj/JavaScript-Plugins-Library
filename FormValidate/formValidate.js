@@ -191,29 +191,6 @@
     };
 
     /**
-     * Limpia instancias asociadas a nodos removidos del DOM.
-     * @returns {void}
-     */
-    const flushPendingRemovals = () => {
-        PENDING_REMOVALS.forEach((node) => {
-            if (!node.isConnected) {
-                FormValidate.destroyAll(node);
-            }
-            PENDING_REMOVALS.delete(node);
-        });
-    };
-
-    /**
-     * Agenda chequeo diferido para destruccion segura.
-     * @param {Element} node Nodo removido por mutacion.
-     * @returns {void}
-     */
-    const scheduleRemovalCheck = (node) => {
-        PENDING_REMOVALS.add(node);
-        queueMicrotask(flushPendingRemovals);
-    };
-
-    /**
      * Extrae opciones declarativas (`data-form-validate-*`) desde el formulario.
      *
      * @param {HTMLFormElement} element Formulario sujeto del plugin.
@@ -1346,6 +1323,29 @@
         }
     }
   
+    /**
+     * Limpia instancias asociadas a nodos removidos del DOM.
+     * @returns {void}
+     */
+    const flushPendingRemovals = () => {
+        PENDING_REMOVALS.forEach((node) => {
+            if (!node.isConnected) {
+                FormValidate.destroyAll(node);
+            }
+            PENDING_REMOVALS.delete(node);
+        });
+    };
+
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
+    const scheduleRemovalCheck = (node) => {
+        PENDING_REMOVALS.add(node);
+        queueMicrotask(flushPendingRemovals);
+    };
+    
     /**
      * Inicializa automaticamente las instancias del plugin y observa cambios en el DOM.
      *
