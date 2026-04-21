@@ -119,11 +119,11 @@ If you want to scope this plugin `MutationObserver` to a specific container, def
 
 Plugin root priority:
 
-1. `
-data-pp-observe-root-form-draft
-`
+1. `data-pp-observe-root-form-draft`
 2. `data-pp-observe-root` on `<html>`
 3. `document.body`
+
+#### ℹ️ For details on the observer pattern and how to optimize automatic plugin initialization, see the section [Recommended Observer Pattern](../README.md#recommended-observer-pattern) in the main README.
 
 ## License
 
