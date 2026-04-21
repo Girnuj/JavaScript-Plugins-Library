@@ -103,7 +103,7 @@
 
         <div class="row">
           <button type="submit">Enviar (limpia borrador e inputs al exito)</button>
-          <button type="button" class="ghost" id="btnClearDraft">Limpiar borrador manual</button>
+          <button type="button" class="ghost" id="btnClearDraft">Limpiar borrador manual (del localStorage no del input)</button>
         </div>
       </form>
 
@@ -116,7 +116,7 @@
     </section>
   </main>
 
-  <script src="./formDraft.js"></script>
+  <script src="./formDraft.min.js"></script>
   <script src="../FormRequest/formRequest.min.js"></script>
 
   <script>
@@ -156,8 +156,8 @@
 
       const nativeFetch = window.fetch.bind(window);
       window.fetch = async function (url, options) {
-        const method = (options && options.method ? options.method : 'GET').toUpperCase();
-        const parsedUrl = new URL(String(url), window.location.href);
+        const method = (options && options.method ? options.method : 'GET').toUpperCase()
+            , parsedUrl = new URL(String(url), window.location.href);
 
         if (method === 'POST' && parsedUrl.pathname === '/api/onboarding') {
           const body = options && options.body instanceof FormData ? options.body : new FormData();

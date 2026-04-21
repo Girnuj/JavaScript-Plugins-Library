@@ -144,29 +144,6 @@
     };
 
     /**
-     * Limpia instancias asociadas a formularios removidos del DOM.
-     * @returns {void}
-     */
-    const flushPendingRemovals = () => {
-        PENDING_REMOVALS.forEach((node) => {
-            if (!node.isConnected) {
-                FormDraft.destroyAll(node);
-            }
-            PENDING_REMOVALS.delete(node);
-        });
-    };
-
-    /**
-     * Agenda verificacion diferida de remocion de nodos.
-     * @param {Element} node Nodo removido en mutacion.
-     * @returns {void}
-     */
-    const scheduleRemovalCheck = (node) => {
-        PENDING_REMOVALS.add(node);
-        queueMicrotask(flushPendingRemovals);
-    };
-
-    /**
      * Lee opciones declarativas (`data-fd-*`) desde el formulario.
      *
      * @param {HTMLFormElement} element Formulario sujeto.
@@ -792,54 +769,122 @@
             getSubjects(root).forEach((subject) => FormDraft.destroy(subject));
         }
     }
-
-    window.Plugins = window.Plugins || {};
-    window.Plugins.FormDraft = FormDraft;
-
+    
     /**
-     * Inicializa automaticamente las instancias y activa observacion de cambios en el DOM.
-     *
+     * Limpia instancias asociadas a formularios removidos del DOM.
      * @returns {void}
      */
+    const flushPendingRemovals = () => {
+        PENDING_REMOVALS.forEach((node) => {
+            if (!node.isConnected) {
+                FormDraft.destroyAll(node);
+            }
+            PENDING_REMOVALS.delete(node);
+        });
+    };
+
+    /**
+     * Agenda verificacion diferida de remocion de nodos.
+     * @param {Element} node Nodo removido en mutacion.
+     * @returns {void}
+     */
+    const scheduleRemovalCheck = (node) => {
+        PENDING_REMOVALS.add(node);
+        queueMicrotask(flushPendingRemovals);
+    };
+    
+    /**
+     * ObserverDispatcher avanzado: permite a cada plugin observar solo el root que le corresponde,
+     * evitando múltiples MutationObserver redundantes y respetando la configuración global.
+     */
+    if (!window.Plugins) window.Plugins = {};
+    if (!window.Plugins.ObserverDispatcher) {
+        window.Plugins.ObserverDispatcher = (function() {
+            // Mapa: rootElement => { observer, handlers[] }
+            const roots = new WeakMap();
+
+            /**
+             * Obtiene el root adecuado para un plugin según la prioridad documentada.
+             * @param {string} pluginKey Ej: 'form-validate'
+             * @returns {Element}
+             */
+            function resolveRoot(pluginKey) {
+                // 1. data-pp-observe-root-{plugin}
+                const attr = 'data-pp-observe-root-' + pluginKey
+                    , specific = document.querySelector(`[${attr}]`);
+                if (specific) return specific;
+
+                // 2. data-pp-observe-root en <html>
+                const html = document.documentElement
+                    , selector = html.getAttribute('data-pp-observe-root');
+                if (selector) {
+                    try {
+                        const el = document.querySelector(selector);
+                        if (el) return el;
+                    } catch (_) {}
+                }
+
+                // 3. Fallback seguro
+                return document.body || html;
+            }
+
+            /**
+             * Registra un handler para un plugin sobre el root adecuado.
+             * @param {string} pluginKey
+             * @param {function} handler
+             */
+            function register(pluginKey, handler) {
+                const html = document.documentElement
+                    , observeGlobal = (html.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
+                if (["false", "0", "off", "no"].includes(observeGlobal)) return; // Observación global desactivada
+
+                const root = resolveRoot(pluginKey);
+                let entry = roots.get(root);
+                if (!entry) {
+                    entry = { handlers: [], observer: null };
+                    entry.observer = new MutationObserver((mutations) => {
+                        entry.handlers.forEach(fn => {
+                            try { fn(mutations); } catch (e) {}
+                        });
+                    });
+                    entry.observer.observe(root, { childList: true, subtree: true });
+                    roots.set(root, entry);
+                }
+                entry.handlers.push(handler);
+            }
+
+            return { register };
+        })();
+    }
+
+    /**
+     * Inicializa automáticamente las instancias del plugin y observa cambios en el DOM.
+     * @returns {void}
+     */
+    // Handler para mutaciones DOM relacionadas con FormDraft
+    const formDraftDomHandler = (mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (!(node instanceof Element)) return;
+                PENDING_REMOVALS.delete(node);
+                FormDraft.initAll(node);
+            });
+            mutation.removedNodes.forEach((node) => {
+                if (!(node instanceof Element)) return;
+                scheduleRemovalCheck(node);
+            });
+        });
+    };
+
     const bootstrap = () => {
         FormDraft.initAll(document);
+        // Usar ObserverDispatcher para registrar el handler solo sobre el root adecuado
+        window.Plugins.ObserverDispatcher.register('form-draft', formDraftDomHandler);
     };
 
     document.readyState === 'loading'
         ? document.addEventListener('DOMContentLoaded', bootstrap, { once: true })
         : bootstrap();
 
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (!(node instanceof Element)) return;
-                FormDraft.initAll(node);
-            });
-
-            mutation.removedNodes.forEach((node) => {
-                if (!(node instanceof Element)) return;
-                scheduleRemovalCheck(node);
-            });
-        });
-    });
-
-    const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
-    if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-        const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
-            , observeRootElement = document.querySelector('[data-pp-observe-root-form-draft]');
-        let observeRoot = observeRootElement || document.body || document.documentElement;
-
-        if (observeRootSelector && !observeRootElement) {
-            try {
-                observeRoot = document.querySelector(observeRootSelector) || observeRoot;
-            } catch (_error) {
-                observeRoot = document.body || document.documentElement;
-            }
-        }
-
-        observer.observe(observeRoot, {
-            childList: true,
-            subtree: true,
-        });
-    }
+    window.Plugins.FormDraft = FormDraft;
 })();
