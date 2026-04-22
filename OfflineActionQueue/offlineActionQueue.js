@@ -397,29 +397,6 @@
     };
 
     /**
-     * Limpia referencias a nodos removidos y destruye sus instancias asociadas.
-     * @returns {void}
-     */
-    const flushPendingRemovals = () => {
-        PENDING_REMOVALS.forEach((node) => {
-            if (!node.isConnected) {
-                OfflineActionQueue.destroyAll(node);
-            }
-            PENDING_REMOVALS.delete(node);
-        });
-    };
-
-    /**
-     * Agenda verificacion diferida para un nodo removido.
-     * @param {Element} node Nodo removido del DOM.
-     * @returns {void}
-     */
-    const scheduleRemovalCheck = (node) => {
-        PENDING_REMOVALS.add(node);
-        queueMicrotask(flushPendingRemovals);
-    };
-
-    /**
      * Construye opciones desde atributos `data-*`, perfiles y herencia de contenedor.
      * @param {HTMLElement} element Trigger objetivo.
      * @returns {OAQOptions & OAQHookSet}
@@ -1270,57 +1247,120 @@
         }
     }
 
-    window.Plugins = window.Plugins || {};
-    window.Plugins.OfflineActionQueue = OfflineActionQueue;
+    /**
+     * ObserverDispatcher avanzado: permite a cada plugin observar solo el root que le corresponde,
+     * evitando múltiples MutationObserver redundantes y respetando la configuración global.
+     */
+    if (!window.Plugins) window.Plugins = {};
+    if (!window.Plugins.ObserverDispatcher) {
+        window.Plugins.ObserverDispatcher = (function() {
+            // Mapa: rootElement => { observer, handlers[] }
+            const roots = new WeakMap();
+
+            /**
+             * Obtiene el root adecuado para un plugin según la prioridad documentada.
+             * @param {string} pluginKey Ej: 'form-validate'
+             * @returns {Element}
+             */
+            function resolveRoot(pluginKey) {
+                // 1. data-pp-observe-root-{plugin}
+                const attr = 'data-pp-observe-root-' + pluginKey
+                    , specific = document.querySelector(`[${attr}]`);
+                if (specific) return specific;
+
+                // 2. data-pp-observe-root en <html>
+                const html = document.documentElement
+                    , selector = html.getAttribute('data-pp-observe-root');
+                if (selector) {
+                    try {
+                        const el = document.querySelector(selector);
+                        if (el) return el;
+                    } catch (_) {}
+                }
+
+                // 3. Fallback seguro
+                return document.body || html;
+            }
+
+            /**
+             * Registra un handler para un plugin sobre el root adecuado.
+             * @param {string} pluginKey
+             * @param {function} handler
+             */
+            function register(pluginKey, handler) {
+                const html = document.documentElement
+                    , observeGlobal = (html.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
+                if (["false", "0", "off", "no"].includes(observeGlobal)) return; // Observación global desactivada
+
+                const root = resolveRoot(pluginKey);
+                let entry = roots.get(root);
+                if (!entry) {
+                    entry = { handlers: [], observer: null };
+                    entry.observer = new MutationObserver((mutations) => {
+                        entry.handlers.forEach(fn => {
+                            try { fn(mutations); } catch (e) {}
+                        });
+                    });
+                    entry.observer.observe(root, { childList: true, subtree: true });
+                    roots.set(root, entry);
+                }
+                entry.handlers.push(handler);
+            }
+
+            return { register };
+        })();
+    }
 
     /**
-     * Inicializa automaticamente instancias declarativas al cargar el DOM.
+     * Limpia instancias asociadas a nodos removidos del DOM.
      * @returns {void}
      */
-    const bootstrap = () => {
-        OfflineActionQueue.initAll(document);
+    const flushPendingRemovals = () => {
+        PENDING_REMOVALS.forEach((node) => {
+            if (!node.isConnected) {
+                OfflineActionQueue.destroyAll(node);
+            }
+            PENDING_REMOVALS.delete(node);
+        });
     };
 
-    document.readyState === 'loading'
-        ? document.addEventListener('DOMContentLoaded', bootstrap, { once: true })
-        : bootstrap();
+    /**
+     * Agenda chequeo diferido para destruccion segura.
+     * @param {Element} node Nodo removido por mutacion.
+     * @returns {void}
+     */
+    const scheduleRemovalCheck = (node) => {
+        PENDING_REMOVALS.add(node);
+        queueMicrotask(flushPendingRemovals);
+    };
 
     /**
-     * Observa mutaciones del DOM para auto-init y destroy de instancias dinamicas.
-     * @type {MutationObserver}
+     * Inicializa automaticamente las instancias del plugin y observa cambios en el DOM.
+     * @returns {void}
      */
-    const observer = new MutationObserver((mutations) => {
+    const offlineActionQueueDomHandler = (mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
                 if (!(node instanceof Element)) return;
                 PENDING_REMOVALS.delete(node);
                 OfflineActionQueue.initAll(node);
             });
-
             mutation.removedNodes.forEach((node) => {
                 if (!(node instanceof Element)) return;
                 scheduleRemovalCheck(node);
             });
         });
-    });
+    };
 
-    const observeGlobal = (document.documentElement.getAttribute('data-pp-observe-global') || '').trim().toLowerCase();
-    if (!['false', '0', 'off', 'no'].includes(observeGlobal)) {
-        const observeRootSelector = (document.documentElement.getAttribute('data-pp-observe-root') || '').trim()
-            , observeRootElement = document.querySelector('[data-pp-observe-root-offline-action-queue]');
-        let observeRoot = observeRootElement || document.body || document.documentElement;
+    const bootstrap = () => {
+        OfflineActionQueue.initAll(document);
+        // Usar ObserverDispatcher para registrar el handler solo sobre el root adecuado
+        window.Plugins.ObserverDispatcher.register('offline-action-queue', offlineActionQueueDomHandler);
+    };
 
-        if (observeRootSelector && !observeRootElement) {
-            try {
-                observeRoot = document.querySelector(observeRootSelector) || observeRoot;
-            } catch (_error) {
-                observeRoot = document.body || document.documentElement;
-            }
-        }
-
-        observer.observe(observeRoot, {
-            childList: true,
-            subtree: true,
-        });
-    }
+    document.readyState === 'loading'
+        ? document.addEventListener('DOMContentLoaded', bootstrap, { once: true })
+        : bootstrap();
+    
+    window.Plugins.OfflineActionQueue = OfflineActionQueue;
 })();
