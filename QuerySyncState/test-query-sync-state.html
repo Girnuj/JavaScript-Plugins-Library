@@ -136,13 +136,13 @@
     </p>
   </section>
 
-  <script src="querySyncState.js"></script>
+  <script src="querySyncState.min.js"></script>
   <script>
     (function () {
       // Referencias de nodos para reflejar estado de la demo en tiempo real.
-      const currentUrlNode = document.getElementById('currentUrl');
-      const eventLogNode = document.getElementById('eventLog');
-      const resetButton = document.getElementById('btnReset');
+      const currentUrlNode = document.getElementById('currentUrl')
+          , eventLogNode = document.getElementById('eventLog')
+          , resetButton = document.getElementById('btnReset');
 
       // Refresca el panel con la URL visible actual del navegador.
       const refreshUrlPanel = () => {
